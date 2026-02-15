@@ -99,13 +99,47 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (Populated during roadmap creation) | - | Pending |
+| DICT-01 | Phase 4 | Pending |
+| DICT-02 | Phase 4 | Pending |
+| DICT-03 | Phase 4 | Pending |
+| DICT-04 | Phase 4 | Pending |
+| ENRH-01 | Phase 5 | Pending |
+| ENRH-02 | Phase 5 | Pending |
+| OUTP-01 | Phase 5 | Pending |
+| OUTP-02 | Phase 5 | Pending |
+| OUTP-03 | Phase 5 | Pending |
+| ASST-01 | Phase 6 | Pending |
+| ASST-02 | Phase 6 | Pending |
+| ASST-03 | Phase 6 | Pending |
+| ASST-04 | Phase 6 | Pending |
+| ASST-05 | Phase 6 | Pending |
+| TOOL-01 | Phase 7 | Pending |
+| TOOL-02 | Phase 7 | Pending |
+| TOOL-03 | Phase 7 | Pending |
+| TOOL-04 | Phase 7 | Pending |
+| TOOL-05 | Phase 7 | Pending |
+| ARCH-01 | Phase 1 | Pending |
+| ARCH-02 | Phase 1 | Pending |
+| HARD-01 | Phase 3 | Pending |
+| HARD-02 | Phase 3 | Pending |
+| ONBD-01 | Phase 7 | Pending |
+| ONBD-02 | Phase 7 | Pending |
+| ONBD-03 | Phase 7 | Pending |
+| ONBD-04 | Phase 7 | Pending |
+| SETT-01 | Phase 7 | Pending |
+| MODL-01 | Phase 2 | Pending |
+| MODL-02 | Phase 2 | Pending |
+| MODL-03 | Phase 2 | Pending |
+| CLD-01 | Phase 8 | Pending |
+| CLD-02 | Phase 8 | Pending |
+| CLD-03 | Phase 8 | Pending |
+| CLD-04 | Phase 8 | Pending |
 
 **Coverage:**
 - v1 requirements: 34 total
-- Mapped to phases: 0
-- Unmapped: 34 ⚠️
+- Mapped to phases: 34
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-15*
-*Last updated: 2026-02-15 after initial definition*
+*Last updated: 2026-02-15 after roadmap creation*
