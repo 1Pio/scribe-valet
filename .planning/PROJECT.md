@@ -38,6 +38,10 @@ A user can reliably speak, get high-quality local AI output quickly, and use it 
 
 This project starts from a detailed pre-execution research brief focused on a practical, local-first dictation + assistant desktop app. The stack direction is Whisper via `whisper.cpp` for STT, `llama.cpp` for local LLM inference, and lightweight local TTS (for example Kokoro ONNX), with model-warm strategies for latency. Product behavior emphasizes fast dictation cleanup, predictable assistant tool behavior, and transparent logging of tool actions. The app should be tray-first with a compact window for chat/history/settings, and should keep dependencies minimal while still handling broad hardware variability.
 
+Source-of-truth references for build intent and architecture decisions:
+- Primary specification: `.deep-research-agent-conversations/Pre_Execution_Project_Research--A_Summar_Of_What_To_Build.md`
+- Original deep research record: `.deep-research-agent-conversations/Pre_Execution_Project_Research.md`
+
 ## Constraints
 
 - **Architecture**: IPC-only internal communication (named pipes/pipes, versioned handshake) — no open network ports.
