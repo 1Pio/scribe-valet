@@ -45,7 +45,7 @@
 | Model Manager Worker | Download/verify/activate local models, VRAM/CPU routing | Isolated process + artifact manifest verifier |
 | Settings/Profile Service | Reads/writes app settings, feature flags, model prefs | Main-side service + SQLite tables |
 | Cloud Sync Worker (optional) | Push/pull cloud history and account-scoped metadata | Isolated process using HTTPS client |
-| Persistence Layer | Durable jobs/events/transcripts/settings and crash recovery metadata | SQLite in WAL mode + file cache |
+| Persistence Layer | Durable settings/model metadata, bounded runtime job metadata, and crash recovery markers | SQLite in WAL mode + file cache |
 
 ## Recommended Project Structure
 
@@ -162,10 +162,10 @@ type HandshakeHello = {
 
 ### Key Data Flows
 
-1. **Realtime dictation:** Audio capture -> STT partials -> renderer live text -> LLM cleanup -> final commit to transcript store.
+1. **Realtime dictation:** Audio capture -> STT partials -> renderer live text -> LLM cleanup -> final insert + clipboard backup + bounded local recovery artifact.
 2. **Assistant turn:** Prompt -> LLM worker -> optional tool-run requests -> tool results -> final answer -> optional TTS stream.
 3. **Model lifecycle:** User selects model -> model manager downloads/verifies/activates -> settings updated -> workers restart with new runtime.
-4. **Optional cloud history:** Local event appended first -> sync worker replicates when authenticated -> conflict metadata stored locally.
+4. **Optional cloud history:** Sync worker writes text history to Convex only when user is authenticated via WorkOS AuthKit; no remote writes while logged out.
 
 ### IPC Boundaries (Major)
 
@@ -240,7 +240,7 @@ type HandshakeHello = {
 
 | Service | Integration Pattern | Notes |
 |---------|---------------------|-------|
-| Optional cloud history API | Dedicated cloud-sync worker via HTTPS | Never blocks local writes; local-first remains source of truth |
+| Convex cloud history API | Dedicated cloud-sync worker via HTTPS | Enabled only after WorkOS AuthKit login; no audio upload |
 | Model artifact hosting | Model manager downloads signed manifests/artifacts | Verify hash/signature before activation |
 | OS credential store | Main process via `safeStorage` | Store login/refresh tokens and handshake secrets |
 

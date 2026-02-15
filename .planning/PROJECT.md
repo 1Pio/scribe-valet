@@ -17,6 +17,7 @@ A user can reliably speak, get high-quality local AI output quickly, and use it 
 ### Active
 
 - [ ] Dictation mode captures via hotkey, transcribes locally, enriches text quickly, and pastes into the focused input with clipboard backup.
+- [ ] Dictation mode defaults to no tools and narrow context (clipboard plus optional selected text) for predictable, low-risk behavior.
 - [ ] Assistant mode supports hotkey-driven voice turns, local STT+LLM+TTS, short conversations, and clear spoken responses.
 - [ ] Internal architecture uses IPC only (pipes/named pipes), with no localhost HTTP or open ports.
 - [ ] Hardware-aware runtime supports Auto/CPU/GPU device selection with graceful CPU fallback.
@@ -24,6 +25,7 @@ A user can reliably speak, get high-quality local AI output quickly, and use it 
 - [ ] First-launch onboarding configures optional login, model preset, hotkeys, and behavior characteristics.
 - [ ] Model lifecycle is managed locally (presence checks, one-time downloads, integrity verification, clean storage layout).
 - [ ] Optional cloud history sync stores text artifacts only when logged in; no audio is uploaded.
+- [ ] Optional cloud history uses Convex with WorkOS AuthKit login, and does not store anything remotely while logged out.
 
 ### Out of Scope
 
@@ -51,7 +53,9 @@ This project starts from a detailed pre-execution research brief focused on a pr
 |----------|-----------|---------|
 | Two-mode product split (Dictation + Assistant) | Separates fast text insertion from broader conversational behavior and tool access | — Pending |
 | IPC-only runtime architecture (no HTTP/ports) | Reduces attack surface, avoids port conflicts, enforces local utility simplicity | — Pending |
+| Electron desktop shell | Preferred project runtime for packaging consistency and team velocity | — Pending |
 | Local STT/LLM/TTS baseline with optional cloud history | Preserves offline usability and privacy while allowing optional sync value | — Pending |
+| Convex + WorkOS AuthKit for optional sync | Aligns cloud history implementation with explicit product decision and keeps login optional | — Pending |
 | User-defined Python tools with per-mode allowlists | Enables extensibility while constraining risk and hidden actions | — Pending |
 | Hardware-aware onboarding presets (Light/Balanced/Power) | Aligns default model choices with user machine capability and UX expectations | — Pending |
 

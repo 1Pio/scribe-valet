@@ -1,120 +1,151 @@
 # Stack Research
 
 **Domain:** Local-first desktop voice dictation + assistant (Windows-first, portable to macOS/Linux)
-**Researched:** 2026-02-15
-**Confidence:** HIGH
+**Researched:** 2026-02-15 (revised)
+**Confidence:** HIGH (for architecture and product-fit), MEDIUM (for exact package/version pins to finalize during implementation)
 
-## Recommended Stack
+## Locked Product Decisions Reflected Here
+
+1. Use **Electron** for desktop shell (not Tauri).
+2. Use **Convex + WorkOS AuthKit** for optional cloud history (not Supabase).
+3. Keep **IPC-only internal architecture** (named pipes/stdin-stdout), no localhost HTTP services.
+4. Keep **offline-first default** and **no cloud history unless logged in**.
+5. Keep **plug-and-play** install experience: users should not run pip/npm manually for runtime.
+
+## Recommended Stack (Primary)
 
 ### Core Technologies
 
-| Technology | Version | Purpose | Why Recommended | Confidence |
-|------------|---------|---------|-----------------|------------|
-| Tauri | `2.10.2` | Desktop shell + secure frontend/backend boundary | Best fit for IPC-first desktop apps: native Rust core, web UI, capability-based permissions, sidecar support, and small bundles compared to Chromium-bundled runtimes. | HIGH |
-| Rust (stable toolchain) | `1.93.1` | Native orchestration layer (audio pipeline, process supervision, IPC, security policy) | Strong performance and predictable memory usage for realtime STT/TTS orchestration; current stable is well above plugin minimums (`>=1.77.2`). | HIGH |
-| React + Vite + TypeScript | `react@19.2.4`, `vite@7.3.1`, `typescript@5.9.3` | Tray-first UI, settings, transcript review, action transparency UI | This is the most standard 2025-2026 frontend stack in Tauri projects: fast HMR/dev loops, good DX, and stable plugin ecosystem integration. | MEDIUM |
-| whisper.cpp | `v1.8.3` | Local STT engine for Dictation + Assistant input | C/C++ runtime with CPU-only mode and multiple acceleration backends (CUDA, Vulkan, OpenVINO, CoreML). Excellent fit for offline-first + hardware fallback. | HIGH |
-| llama.cpp | `b8061` | Local LLM inference for Assistant mode + tool routing | Mature local inference runtime with broad backend coverage (CPU, CUDA, Vulkan, etc.), quantization support, and high control over latency/memory tradeoffs. | HIGH |
-| Kokoro ONNX stack | `kokoro-onnx@0.5.0`, `onnxruntime-gpu@1.24.1` (`onnxruntime@1.24.1` CPU fallback) | Local TTS synthesis | Lightweight local TTS that is practical for desktop assistant UX; ONNX Runtime gives portable CPU/GPU execution paths and clean fallback behavior. | MEDIUM |
-| SQLite | `3.51.2` | Local transcript store, settings, and optional action logs/history | De facto local-first embedded DB: zero service, single-file durability, and direct fit for offline desktop applications. | HIGH |
+| Technology | Version Policy | Purpose | Why Recommended | Confidence |
+|------------|----------------|---------|-----------------|------------|
+| Electron | Current stable major, pinned in repo lockfile | Desktop shell (window/tray/global shortcuts/UI bridge) | Best fit for your stated preference and distribution predictability across Windows/macOS/Linux. Chromium bundled means fewer runtime surprises across machines. | HIGH |
+| Node.js (LTS) | Active LTS only | Main/preload process runtime for Electron shell | Stable ecosystem and mature native-process management for orchestrating sidecars through IPC. | HIGH |
+| React + TypeScript + Vite | Pin current stable in lockfile | UI for tray, settings, onboarding, history viewer, diagnostics | Fast UI iteration and straightforward Electron integration via preload bridge APIs. | HIGH |
+| Core runtime sidecar (Rust or C++) | Pin toolchains per CI | Owns audio pipeline, STT/LLM/TTS orchestration, tool invocation policy, reliability loops | Keeps heavy/unsafe work out of renderer and main process; enforces strict process boundaries and deterministic behavior. | HIGH |
+| `whisper.cpp` | Pin tested release per platform | Local STT for Dictation + Assistant | Strong CPU baseline with optional acceleration backends; proven local-first fit. | HIGH |
+| `llama.cpp` | Pin tested build per model set | Local LLM for dictation cleanup + assistant reasoning + tool planning | Mature local inference runtime with good quantization/control for latency and memory budgets. | HIGH |
+| Local TTS engine (Kokoro ONNX or equivalent) | Pin tested runtime/model bundle | Local speech output for Assistant mode | CPU-first path is adequate for MVP and most hardware; can add acceleration later without changing architecture. | MEDIUM |
+| SQLite | Current stable, pinned by package manager | Local settings/model registry/state metadata only | Reliable embedded store for config, model integrity records, and optional crash-safe queue metadata. Not used as default user history store. | HIGH |
+| Convex | Current stable, pinned in lockfile | Optional cloud history backend (text artifacts only) | Matches project requirement for opt-in cloud sync and clean app-level data model. | HIGH |
+| WorkOS AuthKit | Current stable, pinned in lockfile | Optional login identity flow | Officially supported integration path with Convex for auth. | HIGH |
 
-### Supporting Libraries
+### Cloud Rule (Non-Negotiable)
 
-| Library | Version | Purpose | When to Use | Confidence |
-|---------|---------|---------|-------------|------------|
-| `@tauri-apps/plugin-global-shortcut` | `2.3.1` | Global hotkeys (push-to-talk, dictate-now, cancel) | Always; this is core to “capture from anywhere” UX. | HIGH |
-| `@tauri-apps/plugin-shell` | `2.3.5` | Spawn/monitor sidecars (whisper/llama/tts/python tools) with allowlisted commands | Always if you keep model runtimes in isolated child processes (recommended). | HIGH |
-| `interprocess` (Rust crate) | `2.3.1` | Named pipes / local sockets for internal IPC | Use when stdio is not enough and you need persistent duplex channels without localhost HTTP. | HIGH |
-| `@tauri-apps/plugin-clipboard-manager` | `2.3.2` | Clipboard fallback for paste-anywhere dictation | Always for robust text insertion fallback when simulated paste fails. | HIGH |
-| `@tauri-apps/plugin-sql` | `2.3.2` | Frontend-safe SQL access via sqlx | Use if frontend directly reads history/settings; otherwise keep DB access Rust-only for stricter boundaries. | HIGH |
-| `@tauri-apps/plugin-stronghold` | `2.3.1` | Secrets/key material storage (cloud tokens, encryption keys) | Use before enabling any optional cloud history/sync features. | HIGH |
-| `cpal` (Rust crate) | `0.17.1` | Cross-platform low-latency audio capture/playback | Use for microphone stream capture and playback without platform-specific code forks. | MEDIUM |
-| `@supabase/supabase-js` + `libsodium-wrappers` | `2.95.3` + `0.8.2` | Optional encrypted cloud history sync | Use only in opt-in cloud mode; encrypt client-side before upload so cloud stores ciphertext only. | MEDIUM |
+- If user is **not logged in**: no remote history is written.
+- If user **is logged in**: sync only text artifacts defined in requirements.
+- Audio is never uploaded.
 
-### Development Tools
+## Architecture Pattern (Shell vs Core)
 
-| Tool | Purpose | Notes |
-|------|---------|-------|
-| CMake | Build `whisper.cpp` and `llama.cpp` sidecar binaries | Produce per-target binaries (`windows`, `macos`, `linux`) and bundle with Tauri `externalBin`. |
-| `uv` (`0.10.2`) | Isolated Python env for optional tool plugins and Kokoro pipeline scripts | Prefer this over system Python package drift. |
-| `ruff` (`0.15.1`) | Fast lint/format for optional Python tool ecosystem | Keeps Python tooling quality without heavyweight config. |
+### Shell (Electron)
 
-## Installation
+- UI rendering, tray menu, onboarding/settings, global hotkeys, clipboard/paste integration.
+- No model inference in renderer.
+- Security defaults: `contextIsolation: true`, `nodeIntegration: false`, narrow preload bridge.
 
-```bash
-# Core frontend + Tauri
-npm install react react-dom @tauri-apps/api @tauri-apps/plugin-global-shortcut @tauri-apps/plugin-shell @tauri-apps/plugin-clipboard-manager @tauri-apps/plugin-sql @tauri-apps/plugin-stronghold
+### Core Runtime (sidecar)
 
-# Optional cloud history
-npm install @supabase/supabase-js libsodium-wrappers zod
+- Owns capture/transcribe/cleanup/respond pipeline.
+- Owns worker supervision, timeout/retry policy, and health checks.
+- Owns tool execution governance (allowlists, deterministic schema, audit events).
+- Communicates only via IPC (named pipes/stdin-stdout), never localhost services.
 
-# Python local TTS/runtime utilities
-python -m pip install kokoro-onnx onnxruntime-gpu uv ruff
-```
+## Local Storage Policy (Clarified)
 
-## Alternatives Considered
+SQLite is for:
 
-| Recommended | Alternative | When to Use Alternative |
-|-------------|-------------|-------------------------|
-| Tauri 2 | Electron | Use Electron only if your team is fully JS/TS and cannot support Rust. For this app's offline, low-overhead, IPC/security constraints, Tauri is the better default. |
-| Direct `llama.cpp` sidecar | Ollama | Use Ollama only if localhost REST is acceptable and you want out-of-the-box model management over strict internal IPC design. |
-| `whisper.cpp` | faster-whisper (`1.2.1`) | Use faster-whisper if Python is already the primary runtime and CUDA-only deployment is acceptable. |
-| Kokoro ONNX local TTS | Cloud TTS APIs | Use cloud TTS only for premium voices; keep local TTS as default path to preserve offline usability and privacy. |
+- settings/preferences
+- model index/checksums/download/install state
+- optional bounded operational metadata (job ids, retries, failure markers)
+
+SQLite is **not** default dictation/assistant history storage in logged-out mode.
+
+## Python Tools Runtime (Plug-and-Play Safe)
+
+### Recommended Runtime Model
+
+- Bundle an app-managed Python runtime for tool execution.
+- User edits a local `tools.py` file; app executes tools through deterministic schemas.
+- No required user pip setup for baseline usage.
+
+### Advanced Mode (Optional)
+
+- Allow system Python path override in advanced settings.
+- Mark as unsupported-by-default path for reliability parity.
+
+### Dev Tools vs Runtime
+
+- `uv`, `ruff`, and similar tooling are development-only.
+- Do not appear in end-user setup instructions.
+
+## Hardware Strategy (Realistic)
+
+### Baseline Guarantee
+
+- CPU-only execution always works.
+
+### Acceleration Policy
+
+- GPU acceleration is best-effort and optional.
+- If unavailable/misconfigured, app falls back to CPU with clear user messaging.
+
+### Packaging Guidance
+
+- Ship CPU baseline artifacts in core installer.
+- Add optional accelerator packs later (or selective backend bundles), not mandatory driver/runtime setup for first run.
+
+## TTS Guidance
+
+- Treat TTS as CPU-first for MVP.
+- Avoid locking MVP to CUDA-only runtime assumptions.
+- On Windows GPU acceleration, evaluate DirectML-compatible path when/if latency demands it.
+
+## Supporting Libraries (Electron-Oriented)
+
+| Library | Purpose | When to Use | Confidence |
+|---------|---------|-------------|------------|
+| `electron` | Desktop shell runtime | Always | HIGH |
+| `electron-builder` or `electron-forge` | Packaging/installers/updates | Always | HIGH |
+| `better-sqlite3` or equivalent | Local metadata store | Always for settings/model metadata | HIGH |
+| `zod` | Strict runtime schema validation (IPC/tool contracts) | Always | HIGH |
+| `@convex-dev/*` packages | Convex client/server integration | Only when cloud sync feature is enabled | HIGH |
+| WorkOS AuthKit packages | Login flows for optional sync | Only when user opts into login | HIGH |
 
 ## What NOT to Use
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| `llama-server` / `whisper-server` as internal architecture | They are HTTP-server-oriented patterns; your non-negotiable is IPC-only internals with no localhost ports. | Run `llama.cpp` / `whisper.cpp` as sidecar processes via stdio or named pipes. |
-| Ollama as core runtime | Official usage is REST over `http://localhost:11434`; violates strict no-localhost-internals requirement. | Native `llama.cpp` integration/sidecar under Tauri permissions. |
-| Docker-based local runtime assumptions | Project explicitly disallows Docker and it adds avoidable packaging complexity for desktop users. | Bundle native binaries per target with Tauri `externalBin`. |
-| Cloud-only STT/TTS/LLM baseline | Breaks offline requirement and weakens privacy guarantees. | Local-first inference with optional cloud features as opt-in add-ons. |
+| Supabase for this project | Conflicts with explicit product decision to use Convex + AuthKit. | Convex + WorkOS AuthKit integration. |
+| Tauri as shell for this project | Conflicts with explicit project direction and distribution preference. | Electron shell + isolated core sidecar runtime. |
+| `llama-server` / `whisper-server` internal HTTP patterns | Violates no-ports IPC-only rule. | Sidecar binaries over stdio/named pipes. |
+| User-facing `pip install ...` setup for runtime | Breaks plug-and-play requirement. | Bundle runtime dependencies with app installer. |
+| Treating SQLite as default conversation history in logged-out mode | Conflicts with no-history-unless-logged-in rule. | Keep SQLite limited to settings/model/runtime metadata. |
 
-## Stack Patterns by Variant
+## Two Valid Stack Variants (Same Core Architecture)
 
-**If target machine has NVIDIA GPU:**
-- Build `whisper.cpp` and `llama.cpp` with CUDA backends.
-- Because this gives the best latency for Assistant mode while preserving CPU fallback.
+### Variant A (Recommended for this project)
 
-**If target machine is Windows laptop/iGPU-heavy:**
-- Prefer Vulkan first for cross-vendor acceleration; use CPU fallback automatically.
-- Because it avoids vendor lock-in and keeps portability to Linux/macOS builds.
+- Shell: Electron
+- Core: sidecar runtime (Rust or C++)
+- AI engines: `whisper.cpp` + `llama.cpp` + local TTS
+- Optional cloud: Convex + WorkOS AuthKit
+- Local DB: SQLite for settings/model metadata only
 
-**If machine is CPU-only or low-memory:**
-- Use smaller quantized models (`Whisper base/small`, low-bit GGUF for LLM).
-- Because dictation responsiveness matters more than maximal model quality in MVP.
+### Variant B (Not selected for this project)
 
-**If cloud history is enabled:**
-- Encrypt records client-side with a key derived/stored through Stronghold before upload.
-- Because optional cloud must not weaken local-first privacy guarantees.
+- Shell: Tauri
+- Core/cloud/local rules unchanged
+- Kept only as future migration possibility, not current recommendation
 
-## Version Compatibility
+## Source Notes Used in This Revision
 
-| Package A | Compatible With | Notes |
-|-----------|-----------------|-------|
-| `tauri@2.10.2` | plugin family `2.3.x` | Keep Tauri core + plugins on the same major line (`2.x`) to avoid API/ACL drift. |
-| Rust `>=1.77.2` (recommended `1.93.1`) | Tauri plugin ecosystem | Global Shortcut/Shell/SQL/Stronghold plugins document `1.77.2` minimum. |
-| `kokoro-onnx@0.5.0` | `onnxruntime(‑gpu)@1.24.1` | Kokoro ONNX targets ONNX Runtime; keep runtime modern for provider fixes and GPU support. |
-| `whisper.cpp v1.8.3` | Silero VAD model `v6.2.0` | `whisper.cpp` documents VAD integration path with Silero model support. |
-
-## Sources
-
-- https://v2.tauri.app/ (official Tauri v2 docs/release pages; verified current 2.x line) - HIGH
-- https://v2.tauri.app/concept/inter-process-communication/ (IPC primitives/events/commands) - HIGH
-- https://v2.tauri.app/develop/sidecar/ (official sidecar embedding and execution pattern) - HIGH
-- https://v2.tauri.app/plugin/global-shortcut/ (global shortcut plugin + Rust minimum) - HIGH
-- https://v2.tauri.app/plugin/shell/ (process spawning + capability allowlists) - HIGH
-- https://v2.tauri.app/plugin/sql/ (SQLite/sqlx plugin and migration support) - HIGH
-- https://v2.tauri.app/plugin/stronghold/ (secret management plugin) - HIGH
-- https://github.com/ggml-org/whisper.cpp + releases API (v1.8.3, backend support, VAD docs) - HIGH
-- https://github.com/ggml-org/llama.cpp + releases API (b8061, backend support, GGUF workflow) - HIGH
-- https://github.com/thewh1teagle/kokoro-onnx + https://pypi.org/project/kokoro-onnx/ (runtime approach + package version) - MEDIUM
-- https://pypi.org/project/onnxruntime-gpu/ (GPU runtime version) - HIGH
-- https://www.sqlite.org/index.html (SQLite latest release `3.51.2`) - HIGH
-- https://github.com/ollama/ollama (REST API on localhost `:11434`, used for exclusion rationale) - HIGH
-- https://crates.io/api/v1/crates/interprocess (named-pipe IPC crate version `2.3.1`) - HIGH
-- npm registry package metadata (`npm view ...`) for Tauri plugins, React, Vite, TypeScript, Supabase SDK - MEDIUM
+- Convex AuthKit integration docs: https://docs.convex.dev/auth/authkit/
+- SQLite official docs: https://sqlite.org/
+- ONNX Runtime DirectML docs: https://onnxruntime.ai/docs/execution-providers/DirectML-ExecutionProvider.html
+- Microsoft DirectML notes: https://learn.microsoft.com/en-us/windows/ai/directml/dml-version-history
+- Electron security baseline: https://electronjs.org/docs/latest/tutorial/security
+- React versions: https://www.npmjs.com/package/react
 
 ---
 *Stack research for: local-first desktop voice dictation + assistant (Scribe-Valet)*
-*Researched: 2026-02-15*
+*Researched: 2026-02-15 (revised after pre-execution alignment)*

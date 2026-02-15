@@ -17,7 +17,7 @@ Features users assume exist. Missing these = product feels incomplete.
 | Direct insertion into current app (paste or type simulation) | Dictation users expect text to appear where cursor is, not in a separate window | HIGH | Requires focused-field detection, clipboard safety, and fallback behavior |
 | Basic editing/voice commands | Windows and macOS dictation expose "delete that", "new line", etc. | MEDIUM | Start with a small command grammar; avoid full desktop voice-control scope in v1 |
 | Multi-language input and microphone selection | Native dictation products expose both language switching and mic source controls | MEDIUM | Include per-mode language + device settings and fast switching |
-| Privacy controls and local/offline path | "Local-first" buyers actively look for on-device processing and explicit data handling | MEDIUM | Clear toggles: local providers first, cloud optional with explicit user keys |
+| Privacy controls and local/offline path | "Local-first" buyers actively look for on-device processing and explicit data handling | MEDIUM | Clear toggles: local providers first, cloud optional only after login |
 | Conversation UI basics for assistant mode (history + model selection) | Local assistant apps (GPT4All/LM Studio/Jan) normalize chat history and model switching | MEDIUM | Keep history short-lived by default; expose clear model/runtime state |
 | Hardware-aware runtime selection (Auto/CPU/GPU fallback) | Local AI desktop users expect apps to run on non-GPU machines with graceful degradation | HIGH | Device auto-selection + hard fallback prevents "app does nothing" failures |
 
@@ -33,7 +33,7 @@ Features that set the product apart. Not required, but valuable.
 | Clipboard backup + "never lose dictation" recovery | Solves painful edge case (focus change/paste failure) better than many competitors | MEDIUM | Store last successful artifact + quick restore action |
 | Preset-driven onboarding (Light/Balanced/Power + behavior characteristics) | Faster first success on diverse hardware; fewer settings required up front | MEDIUM | Hardware-aware defaults are a strong UX moat for local-first apps |
 | Voice-activated capture option (VAD) in addition to push-to-talk | Enables hands-free workflows while keeping manual mode for control-sensitive contexts | MEDIUM | Should be optional and clearly indicated to avoid accidental recordings |
-| Transparent provider routing (local by default, BYO keys for cloud) | Converts privacy concern into product trust; aligns with open/local-first audience | MEDIUM | Show where audio/text went on each run (provider, local/cloud, model) |
+| Transparent provider routing (local by default, optional logged-in cloud history) | Converts privacy concern into product trust; aligns with local-first audience | MEDIUM | Show where audio/text went on each run (local vs cloud sync path, model, tool usage) |
 | IPC-only architecture with no localhost ports for core UX | Security and reliability differentiator for enterprise/security-conscious users | HIGH | Position as "utility app, not local server stack" |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
