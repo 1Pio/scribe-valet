@@ -413,8 +413,8 @@ Here’s the application as a **single illustrated box**, with the smallest numb
 │                                                                             │
 │  UI Layer (minimal)                                                         │
 │  ┌───────────────┐   hotkeys   ┌───────────────┐   settings   ┌───────────┐ │
-│  │  Tray/Window  │────────────▶│  Mode Router  │─────────────▶│  Config   │ │
-│  │(Clean ReactUI)│◀────────────│ (Dictation /  │◀─────────────│ + Profiles│ │
+│  │  Tray/Window  │───────────▶│  Mode Router  │ ────────────▶│  Config   │ │
+│  │(Clean ReactUI)│◀───────────│ (Dictation /  │◀─────────────│ + Profiles│ │
 │  └───────────────┘   status    │  Assistant)   │   model dirs └───────────┘ │
 │                                └───────┬───────┘                            │
 │                                        │                                    │
