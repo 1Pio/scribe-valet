@@ -57,6 +57,13 @@ Deliver IPC-only runtime behavior (no localhost HTTP/internal API ports), automa
 - Example fail-state copy: "Couldn't start voice. Try again or restart the app."
 - For trust details: include IPC mention only in expanded technical section.
 
+## Human Verification Follow-Up (2026-02-16)
+
+- Restart-app relaunch behavior is human-verified as working as expected.
+- Worker process (`utility`) forced exit appears to recover quickly, often without visible reconnecting/delayed copy.
+- Renderer process forced exit currently leaves a blank app shell (menu survives, UI and devtools unavailable) until manual full restart.
+- Treat renderer crash recovery as a gap-closure target for Phase 1 completion.
+
 </specifics>
 
 <deferred>
