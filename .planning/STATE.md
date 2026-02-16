@@ -12,11 +12,11 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 **Current Phase:** 1
 **Current Phase Name:** Runtime Guardrails and IPC Backbone
 **Total Phases:** 8
-**Current Plan:** 7
-**Total Plans in Phase:** 7
+**Current Plan:** 8
+**Total Plans in Phase:** 8
 **Status:** Phase complete — ready for verification
 **Last Activity:** 2026-02-16
-**Last Activity Description:** Completed 01-07 restart-app relaunch closure
+**Last Activity Description:** Planned 01-08 renderer crash continuity closure from human verification notes
 
 **Progress:** [██████████] 100%
 
@@ -41,6 +41,8 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 | Phase 01 P05 | 7 min | 3 tasks | 4 files |
 | Phase 01 P06 | 7 min | 3 tasks | 6 files |
 | Phase 01 P07 | 3 min | 3 tasks | 7 files |
+| Phase 01 P08 | planned | 3 tasks | 7 files |
+| Phase 01 P08 | 6 min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -72,18 +74,22 @@ Recent decisions affecting current work:
 - [Phase 01]: Route runtime:restart-app through app.relaunch()+app.exit(0) and keep fix-now/retry as supervisor restarts.
 - [Phase 01]: Model restart-app as relaunch-intent acknowledgment payload instead of RuntimeStatus to avoid semantic conflation.
 - [Phase 01]: Treat UAT Test 3 as closed based on runtime validation plus focused main/preload/renderer test evidence.
+- [Phase 01]: Treat renderer-process blank-window behavior after forced renderer exit as a closure blocker and track it in gap plan 01-08.
+- [Phase 01]: Handle renderer failure signals in main with deterministic reload-first recovery and controlled relaunch fallback.
+- [Phase 01]: Guard runtime status broadcasts against renderer unavailability to preserve IPC continuity during crash recovery.
+- [Phase 01]: Close the renderer blank-window gap with code/test evidence plus explicit manual recheck steps in UAT notes.
 
 ### Pending Todos
 
-None yet.
+- Execute `.planning/phases/01-runtime-guardrails-and-ipc-backbone/01-08-PLAN.md` and re-run human crash continuity check.
 
 ### Blockers/Concerns
 
-None yet.
+- Renderer crash continuity remains unresolved in human verification until 01-08 implementation evidence is captured.
 
 ## Session
 
-**Last Date:** 2026-02-16T18:34:49.769Z
-**Stopped At:** Completed 01-07-PLAN.md
+**Last Date:** 2026-02-16T20:23:20.338Z
+**Stopped At:** Completed 01-08-PLAN.md
 **Resume File:** None
-* None
+* Continue with Plan 01-08 Task 1 (renderer crash recovery wiring).
