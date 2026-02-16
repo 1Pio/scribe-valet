@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 Phase: 1 of 8 (Runtime Guardrails and IPC Backbone)
 Plan: 2 of 4 in current phase
 Status: In progress
-Last activity: 2026-02-16 - Completed 01-04 runtime trust visibility diagnostics
+Last activity: 2026-02-16 - Completed 01-02 worker supervision and handshake guardrails
 
 Progress: [█████░░░░░] 20%
 
@@ -63,6 +63,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-16 07:20
-Stopped at: Completed 01-04-PLAN.md
+Last session: 2026-02-16 07:22
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None
