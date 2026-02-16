@@ -41,45 +41,56 @@ describe("worker supervisor recovery", () => {
 
     const states: string[] = [];
     supervisor.onStatus((status) => {
-      states.push(`${status.state}:${status.attempt}:${status.nextRetryInMs}`);
+      states.push(
+        `${status.state}:${status.recovery.attempt}:${status.recovery.nextRetryInMs}`
+      );
     });
 
     supervisor.start();
     workers[0]?.emit("exit", 1);
     expect(supervisor.getStatus()).toMatchObject({
       state: "reconnecting",
-      attempt: 1,
-      nextRetryInMs: 200
+      recovery: {
+        attempt: 1,
+        nextRetryInMs: 200
+      }
     });
 
     vi.advanceTimersByTime(200);
     workers[1]?.emit("exit", 1);
     expect(supervisor.getStatus()).toMatchObject({
       state: "reconnecting",
-      attempt: 2,
-      nextRetryInMs: 800
+      recovery: {
+        attempt: 2,
+        nextRetryInMs: 800
+      }
     });
 
     vi.advanceTimersByTime(800);
     workers[2]?.emit("exit", 1);
     expect(supervisor.getStatus()).toMatchObject({
       state: "reconnecting",
-      attempt: 3,
-      nextRetryInMs: 2000
+      recovery: {
+        attempt: 3,
+        nextRetryInMs: 2000
+      }
     });
 
     vi.advanceTimersByTime(2000);
     workers[3]?.emit("exit", 1);
     expect(supervisor.getStatus()).toMatchObject({
       state: "exhausted",
-      attempt: 4,
-      nextRetryInMs: null
+      recovery: {
+        attempt: 4,
+        nextRetryInMs: null
+      }
     });
 
     expect(states).toEqual([
       "reconnecting:1:200",
       "reconnecting:2:800",
       "reconnecting:3:2000",
+      "delayed:3:2000",
       "exhausted:4:null"
     ]);
   });

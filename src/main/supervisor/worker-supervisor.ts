@@ -3,20 +3,17 @@ import path from "node:path";
 import { utilityProcess } from "electron";
 import { acceptHandshake, type HandshakeDiagnostics } from "./handshake-gate";
 import { decideRetry } from "./retry-policy";
+import {
+  ACTION_STATUS_THRESHOLD_MS,
+  DELAYED_STATUS_THRESHOLD_MS,
+  MAX_AUTOMATIC_RECOVERY_ATTEMPTS,
+  createIdleRuntimeStatus,
+  type RuntimeMismatchContext,
+  type RuntimeRecoveryContext,
+  type RuntimeStatus
+} from "../../shared/types/runtime-status";
 
-export type WorkerLifecycleState =
-  | "idle"
-  | "reconnecting"
-  | "mismatch"
-  | "exhausted";
-
-export type WorkerLifecycleStatus = {
-  state: WorkerLifecycleState;
-  attempt: number;
-  nextRetryInMs: number | null;
-  updatedAtMs: number;
-  mismatch?: HandshakeDiagnostics;
-};
+export type WorkerLifecycleStatus = RuntimeStatus;
 
 export type WorkerDispatchResult =
   | {
@@ -27,10 +24,6 @@ export type WorkerDispatchResult =
       reason: "not-ready" | "mismatch";
       diagnostics?: HandshakeDiagnostics;
     };
-
-type WorkerSupervisorEvents = {
-  status: [status: WorkerLifecycleStatus];
-};
 
 type WorkerProcessLike = Pick<
   EventEmitter,
@@ -48,15 +41,12 @@ export class WorkerSupervisor extends EventEmitter {
   private readonly spawnWorkerProcess: WorkerSpawner;
   private worker: WorkerProcessLike | null = null;
   private retryTimer: TimerHandle | null = null;
+  private delayedStateTimer: TimerHandle | null = null;
   private reconnectAttempt = 0;
+  private reconnectStartMs: number | null = null;
   private ready = false;
   private mismatchDiagnostics: HandshakeDiagnostics | null = null;
-  private status: WorkerLifecycleStatus = {
-    state: "idle",
-    attempt: 0,
-    nextRetryInMs: null,
-    updatedAtMs: Date.now()
-  };
+  private status: RuntimeStatus = createIdleRuntimeStatus();
   private stopped = true;
 
   public constructor(spawnWorkerProcess: WorkerSpawner = createWorkerSpawner()) {
@@ -76,29 +66,23 @@ export class WorkerSupervisor extends EventEmitter {
 
   public stop(): void {
     this.stopped = true;
-    if (this.retryTimer) {
-      clearTimeout(this.retryTimer);
-      this.retryTimer = null;
-    }
+    this.clearRetryTimer();
+    this.clearDelayedTimer();
 
     this.worker?.kill?.();
     this.worker = null;
     this.ready = false;
     this.mismatchDiagnostics = null;
     this.reconnectAttempt = 0;
-    this.publishStatus({
-      state: "idle",
-      attempt: 0,
-      nextRetryInMs: null,
-      updatedAtMs: Date.now()
-    });
+    this.reconnectStartMs = null;
+    this.publishStatus(createIdleRuntimeStatus());
   }
 
-  public getStatus(): WorkerLifecycleStatus {
+  public getStatus(): RuntimeStatus {
     return this.status;
   }
 
-  public onStatus(listener: (status: WorkerLifecycleStatus) => void): () => void {
+  public onStatus(listener: (status: RuntimeStatus) => void): () => void {
     this.on("status", listener);
     return () => {
       this.off("status", listener);
@@ -136,6 +120,7 @@ export class WorkerSupervisor extends EventEmitter {
 
     this.worker = this.spawnWorkerProcess();
     this.ready = false;
+
     this.worker.on("message", (event: unknown) => {
       const message = readMessageData(event);
       if (message?.kind !== "handshake:hello") {
@@ -144,15 +129,13 @@ export class WorkerSupervisor extends EventEmitter {
 
       const result = acceptHandshake(message.payload);
       if (result.accepted) {
+        this.clearRetryTimer();
+        this.clearDelayedTimer();
         this.mismatchDiagnostics = null;
         this.ready = true;
         this.reconnectAttempt = 0;
-        this.publishStatus({
-          state: "idle",
-          attempt: 0,
-          nextRetryInMs: null,
-          updatedAtMs: Date.now()
-        });
+        this.reconnectStartMs = null;
+        this.publishStatus(createIdleRuntimeStatus());
         return;
       }
 
@@ -160,10 +143,11 @@ export class WorkerSupervisor extends EventEmitter {
       this.mismatchDiagnostics = result.diagnostics;
       this.publishStatus({
         state: "mismatch",
-        attempt: this.reconnectAttempt,
-        nextRetryInMs: null,
         updatedAtMs: Date.now(),
-        mismatch: result.diagnostics
+        delayedThresholdMs: DELAYED_STATUS_THRESHOLD_MS,
+        actionThresholdMs: ACTION_STATUS_THRESHOLD_MS,
+        recovery: this.createRecoveryContext(null),
+        mismatch: asMismatchContext(result.reason, result.diagnostics)
       });
       this.worker?.kill?.();
     });
@@ -191,24 +175,35 @@ export class WorkerSupervisor extends EventEmitter {
       return;
     }
 
+    this.ready = false;
     this.reconnectAttempt += 1;
-    const decision = decideRetry(this.reconnectAttempt);
 
+    if (this.reconnectStartMs === null) {
+      this.reconnectStartMs = Date.now();
+      this.scheduleDelayedStatusTransition();
+    }
+
+    const decision = decideRetry(this.reconnectAttempt);
     if (!decision.retry) {
+      this.clearRetryTimer();
       this.publishStatus({
         state: "exhausted",
-        attempt: this.reconnectAttempt,
-        nextRetryInMs: null,
-        updatedAtMs: Date.now()
+        updatedAtMs: Date.now(),
+        delayedThresholdMs: DELAYED_STATUS_THRESHOLD_MS,
+        actionThresholdMs: ACTION_STATUS_THRESHOLD_MS,
+        recovery: this.createRecoveryContext(null),
+        mismatch: null
       });
       return;
     }
 
     this.publishStatus({
       state: "reconnecting",
-      attempt: this.reconnectAttempt,
-      nextRetryInMs: decision.delayMs,
-      updatedAtMs: Date.now()
+      updatedAtMs: Date.now(),
+      delayedThresholdMs: DELAYED_STATUS_THRESHOLD_MS,
+      actionThresholdMs: ACTION_STATUS_THRESHOLD_MS,
+      recovery: this.createRecoveryContext(decision.delayMs),
+      mismatch: null
     });
 
     this.retryTimer = setTimeout(() => {
@@ -216,7 +211,52 @@ export class WorkerSupervisor extends EventEmitter {
     }, decision.delayMs);
   }
 
-  private publishStatus(status: WorkerLifecycleStatus): void {
+  private scheduleDelayedStatusTransition(): void {
+    this.clearDelayedTimer();
+    this.delayedStateTimer = setTimeout(() => {
+      if (this.status.state !== "reconnecting") {
+        return;
+      }
+
+      this.publishStatus({
+        state: "delayed",
+        updatedAtMs: Date.now(),
+        delayedThresholdMs: DELAYED_STATUS_THRESHOLD_MS,
+        actionThresholdMs: ACTION_STATUS_THRESHOLD_MS,
+        recovery: this.createRecoveryContext(this.status.recovery.nextRetryInMs),
+        mismatch: null
+      });
+    }, DELAYED_STATUS_THRESHOLD_MS);
+  }
+
+  private createRecoveryContext(nextRetryInMs: number | null): RuntimeRecoveryContext {
+    const startedAtMs = this.reconnectStartMs;
+    const elapsedMs = startedAtMs === null ? 0 : Date.now() - startedAtMs;
+
+    return {
+      attempt: this.reconnectAttempt,
+      maxAttempts: MAX_AUTOMATIC_RECOVERY_ATTEMPTS,
+      nextRetryInMs,
+      startedAtMs,
+      elapsedMs
+    };
+  }
+
+  private clearRetryTimer(): void {
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
+  }
+
+  private clearDelayedTimer(): void {
+    if (this.delayedStateTimer) {
+      clearTimeout(this.delayedStateTimer);
+      this.delayedStateTimer = null;
+    }
+  }
+
+  private publishStatus(status: RuntimeStatus): void {
     this.status = status;
     this.emit("status", status);
   }
@@ -256,5 +296,20 @@ function readMessageData(event: unknown): WorkerMessage | null {
   return {
     kind: possibleMessage.kind,
     payload: possibleMessage.payload
+  };
+}
+
+function asMismatchContext(
+  reason: "protocol-mismatch" | "version-mismatch" | "invalid-handshake",
+  diagnostics: HandshakeDiagnostics
+): RuntimeMismatchContext {
+  return {
+    reason,
+    expectedProtocolId: diagnostics.expectedProtocolId,
+    expectedProtocolVersion: diagnostics.expectedProtocolVersion,
+    expectedWorkerVersionRange: diagnostics.expectedWorkerVersionRange,
+    installedProtocolId: diagnostics.installedProtocolId,
+    installedProtocolVersion: diagnostics.installedProtocolVersion,
+    installedWorkerVersion: diagnostics.installedWorkerVersion
   };
 }
