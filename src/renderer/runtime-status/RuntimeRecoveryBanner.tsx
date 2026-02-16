@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactElement } from "react";
+import { useEffect, useMemo, useState, type ReactElement } from "react";
 import type { RuntimeStatus } from "../../shared/types/runtime-status";
 import { mapRuntimeStatusToBannerModel } from "./runtime-state-machine";
 
@@ -21,6 +21,12 @@ export function RuntimeRecoveryBanner({
     [runtimeStatus, isVoiceActive]
   );
 
+  useEffect(() => {
+    if (!model.showDetails) {
+      setDetailsVisible(false);
+    }
+  }, [model.showDetails]);
+
   if (!model.visible) {
     return null;
   }
@@ -41,8 +47,13 @@ export function RuntimeRecoveryBanner({
       {model.summary ? <p>{model.summary}</p> : null}
 
       <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+        {model.showRestartApp && model.prioritizeRestartApp ? (
+          <button onClick={onRestartApp}>Restart app</button>
+        ) : null}
         {model.showTryAgain ? <button onClick={onTryAgain}>Try again</button> : null}
-        {model.showRestartApp ? <button onClick={onRestartApp}>Restart app</button> : null}
+        {model.showRestartApp && !model.prioritizeRestartApp ? (
+          <button onClick={onRestartApp}>Restart app</button>
+        ) : null}
         {model.showDetails ? (
           <button
             onClick={() => {

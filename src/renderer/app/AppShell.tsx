@@ -48,16 +48,22 @@ export function AppShell({
     };
   }, [runtimeStatusBridge]);
 
+  const runStatusAction = (action: () => Promise<RuntimeStatus>): void => {
+    void action().then((nextStatus) => {
+      setRuntimeStatus(nextStatus);
+    });
+  };
+
   return (
     <>
       <RuntimeRecoveryBanner
         runtimeStatus={runtimeStatus}
         isVoiceActive={isVoiceActive}
         onTryAgain={() => {
-          void runtimeStatusBridge.tryAgain().then(setRuntimeStatus);
+          runStatusAction(() => runtimeStatusBridge.tryAgain());
         }}
         onRestartApp={() => {
-          void runtimeStatusBridge.restartApp().then(setRuntimeStatus);
+          runStatusAction(() => runtimeStatusBridge.restartApp());
         }}
       />
       {children}

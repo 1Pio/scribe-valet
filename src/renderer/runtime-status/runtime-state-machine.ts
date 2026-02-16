@@ -16,6 +16,7 @@ export type RuntimeBannerViewModel = {
   showTryAgain: boolean;
   showRestartApp: boolean;
   showDetails: boolean;
+  prioritizeRestartApp: boolean;
 };
 
 const HIDDEN_MODEL: RuntimeBannerViewModel = {
@@ -26,7 +27,8 @@ const HIDDEN_MODEL: RuntimeBannerViewModel = {
   details: null,
   showTryAgain: false,
   showRestartApp: false,
-  showDetails: false
+  showDetails: false,
+  prioritizeRestartApp: false
 };
 
 export function mapRuntimeStatusToBannerModel(
@@ -46,12 +48,13 @@ export function mapRuntimeStatusToBannerModel(
       phase: "exhausted",
       visible: true,
       title: "Voice is still unavailable.",
-      summary: "Restart app to continue.",
+      summary: "Restart app to get voice back.",
       details:
-        "Automatic recovery attempts were used. You can review technical details before trying again.",
+        "Automatic restart attempts were used without restoring voice. Open details to review the latest status and version information.",
       showTryAgain: true,
       showRestartApp: true,
-      showDetails: true
+      showDetails: true,
+      prioritizeRestartApp: true
     };
   }
 
@@ -64,7 +67,8 @@ export function mapRuntimeStatusToBannerModel(
       details: null,
       showTryAgain: true,
       showRestartApp: true,
-      showDetails: false
+      showDetails: false,
+      prioritizeRestartApp: false
     };
   }
 
@@ -80,7 +84,8 @@ export function mapRuntimeStatusToBannerModel(
       details: null,
       showTryAgain: false,
       showRestartApp: false,
-      showDetails: false
+      showDetails: false,
+      prioritizeRestartApp: false
     };
   }
 
@@ -92,6 +97,7 @@ export function mapRuntimeStatusToBannerModel(
     details: null,
     showTryAgain: false,
     showRestartApp: false,
-    showDetails: false
+    showDetails: false,
+    prioritizeRestartApp: false
   };
 }

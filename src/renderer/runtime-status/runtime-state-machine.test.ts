@@ -82,6 +82,7 @@ describe("runtime state machine", () => {
     expect(model.showTryAgain).toBe(true);
     expect(model.showRestartApp).toBe(true);
     expect(model.summary).toBe("Try again or restart app.");
+    expect(model.prioritizeRestartApp).toBe(false);
   });
 
   it("emphasizes restart app and show details after retries are exhausted", () => {
@@ -100,8 +101,9 @@ describe("runtime state machine", () => {
     );
 
     expect(model.phase).toBe("exhausted");
-    expect(model.summary).toBe("Restart app to continue.");
+    expect(model.summary).toBe("Restart app to get voice back.");
     expect(model.showRestartApp).toBe(true);
     expect(model.showDetails).toBe(true);
+    expect(model.prioritizeRestartApp).toBe(true);
   });
 });
