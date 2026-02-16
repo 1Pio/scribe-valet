@@ -1,7 +1,11 @@
 import path from "node:path";
 import { app, BrowserWindow, ipcMain } from "electron";
-
-const RUNTIME_PING_CHANNEL = "runtime:ping";
+import {
+  createHandshakeResponse,
+  isHandshakeRequestPayload,
+  type HandshakeRequestEnvelope
+} from "../shared/protocol/handshake";
+import { IPC_CHANNELS } from "../shared/protocol/ipc-envelope";
 
 function createMainWindow(): BrowserWindow {
   const preloadPath = path.join(__dirname, "..", "preload", "index.js");
@@ -19,9 +23,24 @@ function createMainWindow(): BrowserWindow {
 }
 
 async function bootstrap(): Promise<void> {
-  ipcMain.handle(RUNTIME_PING_CHANNEL, async () => {
+  ipcMain.handle(IPC_CHANNELS.RUNTIME_PING, async () => {
     return { ok: true };
   });
+
+  ipcMain.handle(
+    IPC_CHANNELS.HANDSHAKE_INIT,
+    async (_event, envelope: HandshakeRequestEnvelope) => {
+      const accepted = isHandshakeRequestPayload(envelope?.payload ?? null);
+      return createHandshakeResponse(
+        {
+          accepted,
+          reason: accepted ? "ok" : "protocol-mismatch",
+          capabilities: accepted ? envelope.payload.capabilities : []
+        },
+        envelope?.requestId ?? "unknown"
+      );
+    }
+  );
 
   const mainWindow = createMainWindow();
   mainWindow.loadURL("data:text/html,<div id=\"root\"></div>");
