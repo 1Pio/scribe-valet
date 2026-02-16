@@ -1,8 +1,9 @@
-status: complete
+---
+status: diagnosed
 phase: 01-runtime-guardrails-and-ipc-backbone
 source: [01-01-SUMMARY.md, 01-02-SUMMARY.md, 01-03-SUMMARY.md, 01-04-SUMMARY.md, 01-05-SUMMARY.md, 01-06-SUMMARY.md]
 started: 2026-02-16T10:44:45.304Z
-updated: 2026-02-16T11:58:00Z
+updated: 2026-02-16T12:04:00Z
 ---
 
 ## Current Test
@@ -53,8 +54,19 @@ skipped: 1
   reason: "User reported: pass ; Note: it does work as expected, banner gets shown of there is any mismatch and buttons generally work as expected; only that trying again or restarting of cause does not solve the simulated issue automatically, but the app refrashes etc. just never truly *restarts* when hitting 'restart app' -> everything more or less as expected"
   severity: major
   test: 3
-  artifacts: []
-  missing: []
+  root_cause: "Restart app action maps to worker supervisor reset instead of a true Electron relaunch, so it refreshes runtime state without restarting the app process."
+  artifacts:
+    - path: "src/main/index.ts"
+      issue: "restartApp is wired to restartSupervisor(supervisor), which only stop/starts worker supervisor"
+    - path: "src/preload/runtime-status-bridge.ts"
+      issue: "runtime:restart-app contract expects RuntimeStatus response, matching refresh semantics rather than relaunch"
+    - path: "src/renderer/app/AppShell.tsx"
+      issue: "Restart app button correctly calls runtimeStatusBridge.restartApp(), confirming issue is downstream in main behavior"
+  missing:
+    - "Add dedicated app relaunch handler for restart-app using app.relaunch() and controlled exit"
+    - "Keep retry/fix-now mapped to supervisor restart while separating restart-app semantics"
+    - "Update restart-app IPC contract/tests to validate relaunch intent"
+  debug_session: ".planning/debug/restart-app-action-not-restarting.md"
 
 ## Recheck Commands
 
