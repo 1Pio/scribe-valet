@@ -8,10 +8,15 @@ import {
   createRuntimeTrustBridge,
   type RuntimeTrustBridge
 } from "./runtime-trust-bridge";
+import {
+  createRuntimeStatusBridge,
+  type RuntimeStatusBridge
+} from "./runtime-status-bridge";
 
 export type RuntimeBridge = {
   ping: () => Promise<{ ok: boolean }>;
   handshake: () => Promise<HandshakeResponseEnvelope>;
+  runtimeStatus: RuntimeStatusBridge;
   runtimeTrust: RuntimeTrustBridge;
 };
 
@@ -28,7 +33,8 @@ const runtimeBridge: RuntimeBridge = {
         },
         `handshake-${Date.now()}`
       )
-    ),
+  ),
+  runtimeStatus: createRuntimeStatusBridge(),
   runtimeTrust: createRuntimeTrustBridge()
 };
 

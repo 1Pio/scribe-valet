@@ -5,6 +5,12 @@ export const IPC_CHANNELS = {
   HANDSHAKE_INIT: "runtime:handshake:init",
   HANDSHAKE_ACK: "runtime:handshake:ack",
   RUNTIME_PING: "runtime:ping",
+  RUNTIME_GET_STATUS: "runtime:get-status",
+  RUNTIME_STATUS_CHANGED: "runtime:status:changed",
+  RUNTIME_FIX_NOW: "runtime:fix-now",
+  RUNTIME_RETRY: "runtime:retry",
+  RUNTIME_RESTART_APP: "runtime:restart-app",
+  RUNTIME_COPY_REPORT: "runtime:copy-report",
   RUNTIME_TRUST_GET: "runtime:trust:get",
   RUNTIME_TRUST_RETRY: "runtime:trust:retry",
   RUNTIME_TRUST_COPY_REPORT: "runtime:trust:copy-report"
