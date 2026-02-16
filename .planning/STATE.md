@@ -10,29 +10,30 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 ## Current Position
 
 Phase: 1 of 8 (Runtime Guardrails and IPC Backbone)
-Plan: 2 of 4 in current phase
+Plan: 5 of 5 in current phase
 Status: In progress
-Last activity: 2026-02-16 - Completed 01-02 worker supervision and handshake guardrails
+Last activity: 2026-02-16 - Completed 01-03 runtime recovery and mismatch UX mapping
 
-Progress: [█████░░░░░] 20%
+Progress: [████████░░] 40%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: 6 min
-- Total execution time: 0.2 hours
+- Total plans completed: 4
+- Average duration: 7 min
+- Total execution time: 0.4 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 1 | 2 | 12 min | 6 min |
+| 1 | 4 | 26 min | 7 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (5 min), 01-04 (7 min)
+- Last 5 plans: 01-01 (5 min), 01-04 (7 min), 01-02 (8 min), 01-03 (6 min)
 - Trend: Stable
 | Phase 01 P02 | 8 min | 3 tasks | 12 files |
+| Phase 01 P03 | 6 min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -52,6 +53,9 @@ Recent decisions affecting current work:
 - [Phase 01]: Worker compatibility acceptance now uses semver range ^0.1.0 rather than string comparison.
 - [Phase 01]: Runtime status payloads now include delayed/action thresholds (3s/9s) for deterministic UX timing.
 - [Phase 01]: Runtime status is exposed through both runtime:get-status and runtime:status:changed channels.
+- [Phase 01]: Runtime preload bridge now rejects malformed status/report IPC payloads before exposing them to renderer code.
+- [Phase 01]: Exhausted recovery messaging emphasizes Restart app first while retaining Try again and Show details as secondary options.
+- [Phase 01]: Mismatch recovery shows Restart app fallback only for protocol/version mismatch, not invalid-handshake refresh attempts.
 
 ### Pending Todos
 
@@ -63,6 +67,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-16 07:22
-Stopped at: Completed 01-02-PLAN.md
+Last session: 2026-02-16 10:14
+Stopped at: Completed 01-03-PLAN.md
 Resume file: None
