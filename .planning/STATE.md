@@ -32,6 +32,7 @@ Progress: [█████░░░░░] 20%
 **Recent Trend:**
 - Last 5 plans: 01-01 (5 min), 01-04 (7 min)
 - Trend: Stable
+| Phase 01 P02 | 8 min | 3 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -48,6 +49,9 @@ Recent decisions affecting current work:
 - [Phase 01]: Trust status is only marked verified when guardrail, findings, and process metrics checks all pass.
 - [Phase 01]: Runtime report copy is executed in main via IPC to keep renderer privileges narrow.
 - [Phase 01]: Unconfirmed trust keeps local dictation/assistant available while exposing Retry and Details.
+- [Phase 01]: Worker compatibility acceptance now uses semver range ^0.1.0 rather than string comparison.
+- [Phase 01]: Runtime status payloads now include delayed/action thresholds (3s/9s) for deterministic UX timing.
+- [Phase 01]: Runtime status is exposed through both runtime:get-status and runtime:status:changed channels.
 
 ### Pending Todos
 
