@@ -39,6 +39,7 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 | Phase 01 P02 | 8 min | 3 tasks | 12 files |
 | Phase 01 P03 | 6 min | 3 tasks | 9 files |
 | Phase 01 P05 | 7 min | 3 tasks | 4 files |
+| Phase 01 P06 | 7 min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -64,6 +65,9 @@ Recent decisions affecting current work:
 - [Phase 01]: Load BrowserWindow with compiled renderer entry instead of blank data URL so trust UI can mount during local runs.
 - [Phase 01]: Treat localhost guardrail violations as executable transport signals only and exclude benign test/spec literals.
 - [Phase 01]: Record UAT 1/4/5/6 rechecks against command output and compiled renderer evidence with canonical npm run dev startup.
+- [Phase 01]: Bound runtime recovery actions (fix-now/retry/restart-app) to supervisor reset behavior so UI actions return immediate RuntimeStatus updates.
+- [Phase 01]: Load BrowserWindow renderer via compiled script URL instead of inline require bootstrap to avoid page-context require failures.
+- [Phase 01]: Treat UAT as ready-for-human-retest after wiring closure, with command evidence recorded in verification artifacts.
 
 ### Pending Todos
 
@@ -75,6 +79,6 @@ None yet.
 
 ## Session
 
-**Last Date:** 2026-02-16T10:19:37.912Z
-**Stopped At:** Completed 01-05-PLAN.md
+**Last Date:** 2026-02-16T11:29:43.122Z
+**Stopped At:** Completed 01-06-PLAN.md
 **Resume File:** None
