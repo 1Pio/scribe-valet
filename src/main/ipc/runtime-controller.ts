@@ -35,6 +35,7 @@ type IpcMainLike = {
 
 type RendererBroadcastTarget = {
   send: (channel: string, payload: RuntimeStatus) => void;
+  isDestroyed?: () => boolean;
 };
 
 type RuntimeActionHandlers = {
@@ -73,7 +74,15 @@ export function registerRuntimeController(options: {
   });
 
   const unsubscribe = statusSource.onStatus((status) => {
-    target.send(RUNTIME_CONTROLLER_CHANNELS.STATUS_CHANGED, status);
+    if (target.isDestroyed?.()) {
+      return;
+    }
+
+    try {
+      target.send(RUNTIME_CONTROLLER_CHANNELS.STATUS_CHANGED, status);
+    } catch {
+      return;
+    }
   });
 
   return () => {

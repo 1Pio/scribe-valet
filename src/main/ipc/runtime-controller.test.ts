@@ -127,4 +127,43 @@ describe("runtime controller", () => {
     expect(restartResult).toEqual({ ok: true, action: "relaunch-intent" });
     expect(copyReport).toHaveBeenCalledTimes(1);
   });
+
+  it("keeps action handlers usable when renderer status send fails", async () => {
+    const handlers = new Map<string, (_event: unknown) => unknown | Promise<unknown>>();
+    let pushStatus: ((status: RuntimeStatus) => void) | undefined;
+    const fixNow = vi.fn(() => createIdleRuntimeStatus(99));
+
+    registerRuntimeController({
+      ipcMain: {
+        handle: (channel, handler) => {
+          handlers.set(channel, handler);
+        }
+      },
+      statusSource: {
+        getStatus: () => createIdleRuntimeStatus(),
+        onStatus: (listener) => {
+          pushStatus = listener;
+          return () => {
+            pushStatus = undefined;
+          };
+        }
+      },
+      target: {
+        send: vi.fn(() => {
+          throw new Error("renderer unavailable");
+        })
+      },
+      actions: {
+        fixNow,
+        retry: () => createIdleRuntimeStatus(),
+        restartApp: () => ({ ok: true, action: "relaunch-intent" }),
+        copyReport: () => ({ ok: true, report: "status report" })
+      }
+    });
+
+    pushStatus?.(createIdleRuntimeStatus(50));
+    await handlers.get(RUNTIME_CONTROLLER_CHANNELS.FIX_NOW)?.({});
+
+    expect(fixNow).toHaveBeenCalledTimes(1);
+  });
 });
