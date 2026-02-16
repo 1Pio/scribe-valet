@@ -12,7 +12,7 @@ Scribe-Valet v1 is sequenced to establish local-only runtime trust first, then d
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Runtime Guardrails and IPC Backbone** - Local runtime stays no-ports and recovers from worker failures.
+- [x] **Phase 1: Runtime Guardrails and IPC Backbone** - Local runtime stays no-ports and recovers from worker failures.
 - [ ] **Phase 2: Model and Storage Lifecycle** - Model assets are checked, downloaded, verified, and stored predictably.
 - [ ] **Phase 3: Device Selection and Fallback Behavior** - Compute routing is user-controllable with reliable CPU fallback.
 - [ ] **Phase 4: Dictation Capture and Local Transcription** - Hotkey-to-transcript flow works offline with microphone control.
@@ -34,14 +34,14 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 8 plans
 
 Plans:
-- [ ] 01-01-PLAN.md - Bootstrap IPC-only runtime shell and localhost guardrails.
-- [ ] 01-02-PLAN.md - Implement worker supervision, handshake gating, and auto-retry lifecycle.
-- [ ] 01-03-PLAN.md - Deliver recovery and mismatch UX with locked human-tone messaging.
-- [ ] 01-04-PLAN.md - Add local-only trust badge and privacy runtime checks diagnostics.
-- [ ] 01-05-PLAN.md - Close UAT boot/guardrail gaps and re-validate trust-flow checks.
-- [ ] 01-06-PLAN.md - Wire live supervisor/runtime recovery flow and refresh verification/UAT evidence.
-- [ ] 01-07-PLAN.md - Close diagnosed restart-app relaunch semantics gap from UAT mismatch recovery.
-- [ ] 01-08-PLAN.md - Close renderer crash continuity gap that leaves a persistent blank window after renderer-process failure.
+- [x] 01-01-PLAN.md - Bootstrap IPC-only runtime shell and localhost guardrails.
+- [x] 01-02-PLAN.md - Implement worker supervision, handshake gating, and auto-retry lifecycle.
+- [x] 01-03-PLAN.md - Deliver recovery and mismatch UX with locked human-tone messaging.
+- [x] 01-04-PLAN.md - Add local-only trust badge and privacy runtime checks diagnostics.
+- [x] 01-05-PLAN.md - Close UAT boot/guardrail gaps and re-validate trust-flow checks.
+- [x] 01-06-PLAN.md - Wire live supervisor/runtime recovery flow and refresh verification/UAT evidence.
+- [x] 01-07-PLAN.md - Close diagnosed restart-app relaunch semantics gap from UAT mismatch recovery.
+- [x] 01-08-PLAN.md - Close renderer crash continuity gap that leaves a persistent blank window after renderer-process failure.
 
 ### Phase 2: Model and Storage Lifecycle
 **Goal**: Users have a predictable local model lifecycle with integrity checks and clear storage layout.
@@ -151,7 +151,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Runtime Guardrails and IPC Backbone | 0/TBD | Not started | - |
+| 1. Runtime Guardrails and IPC Backbone | 8/8 | Complete | 2026-02-17 |
 | 2. Model and Storage Lifecycle | 0/TBD | Not started | - |
 | 3. Device Selection and Fallback Behavior | 0/TBD | Not started | - |
 | 4. Dictation Capture and Local Transcription | 0/TBD | Not started | - |
