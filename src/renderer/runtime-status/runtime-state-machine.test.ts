@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { createIdleRuntimeStatus, type RuntimeStatus } from "../../shared/types/runtime-status";
-import { mapRuntimeStatusToBannerModel } from "./runtime-state-machine";
+import {
+  mapRuntimeStatusToBannerModel,
+  mapRuntimeStatusToMismatchModel
+} from "./runtime-state-machine";
 
 function buildStatus(overrides: Partial<RuntimeStatus>): RuntimeStatus {
   return {
@@ -105,5 +108,45 @@ describe("runtime state machine", () => {
     expect(model.showRestartApp).toBe(true);
     expect(model.showDetails).toBe(true);
     expect(model.prioritizeRestartApp).toBe(true);
+  });
+
+  it("maps version mismatch to human summary with restart fallback", () => {
+    const model = mapRuntimeStatusToMismatchModel(
+      buildStatus({
+        state: "mismatch",
+        mismatch: {
+          reason: "version-mismatch",
+          expectedProtocolId: "sv-ipc",
+          expectedProtocolVersion: 1,
+          expectedWorkerVersionRange: "^0.1.0",
+          installedProtocolId: "sv-ipc",
+          installedProtocolVersion: 1,
+          installedWorkerVersion: "0.2.0"
+        }
+      })
+    );
+
+    expect(model?.summary).toBe("Finishing an update so voice can start.");
+    expect(model?.showRestartApp).toBe(true);
+  });
+
+  it("hides restart fallback for invalid handshake mismatch", () => {
+    const model = mapRuntimeStatusToMismatchModel(
+      buildStatus({
+        state: "mismatch",
+        mismatch: {
+          reason: "invalid-handshake",
+          expectedProtocolId: "sv-ipc",
+          expectedProtocolVersion: 1,
+          expectedWorkerVersionRange: "^0.1.0",
+          installedProtocolId: "sv-ipc",
+          installedProtocolVersion: 1,
+          installedWorkerVersion: "0.1.0"
+        }
+      })
+    );
+
+    expect(model?.summary).toBe("Refreshing voice setup and trying again.");
+    expect(model?.showRestartApp).toBe(false);
   });
 });

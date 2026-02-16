@@ -19,6 +19,15 @@ export type RuntimeBannerViewModel = {
   prioritizeRestartApp: boolean;
 };
 
+export type RuntimeMismatchViewModel = {
+  visible: boolean;
+  summary: string;
+  detailsTitle: string;
+  expectedVersion: string;
+  installedVersion: string;
+  showRestartApp: boolean;
+};
+
 const HIDDEN_MODEL: RuntimeBannerViewModel = {
   phase: "hidden",
   visible: false,
@@ -99,5 +108,34 @@ export function mapRuntimeStatusToBannerModel(
     showRestartApp: false,
     showDetails: false,
     prioritizeRestartApp: false
+  };
+}
+
+export function mapRuntimeStatusToMismatchModel(
+  status: RuntimeStatus
+): RuntimeMismatchViewModel | null {
+  if (status.state !== "mismatch" || status.mismatch === null) {
+    return null;
+  }
+
+  const mismatch = status.mismatch;
+
+  type MismatchReason = NonNullable<RuntimeStatus["mismatch"]>["reason"];
+
+  const reasonToSummary: Record<MismatchReason, string> = {
+    "version-mismatch": "Finishing an update so voice can start.",
+    "protocol-mismatch": "Fixing a small setup mismatch before voice starts.",
+    "invalid-handshake": "Refreshing voice setup and trying again."
+  };
+
+  const showRestartApp = mismatch.reason !== "invalid-handshake";
+
+  return {
+    visible: true,
+    summary: reasonToSummary[mismatch.reason],
+    detailsTitle: "Details",
+    expectedVersion: `${mismatch.expectedProtocolId}/${mismatch.expectedProtocolVersion} (${mismatch.expectedWorkerVersionRange})`,
+    installedVersion: `${mismatch.installedProtocolId}/${mismatch.installedProtocolVersion} (${mismatch.installedWorkerVersion})`,
+    showRestartApp
   };
 }

@@ -1,12 +1,15 @@
 import { useEffect, useState, type ReactElement } from "react";
 import { createIdleRuntimeStatus, type RuntimeStatus } from "../../shared/types/runtime-status";
+import { MismatchRecoveryPanel } from "../runtime-status/MismatchRecoveryPanel";
 import { RuntimeRecoveryBanner } from "../runtime-status/RuntimeRecoveryBanner";
 
 type RuntimeStatusBridge = {
   getStatus: () => Promise<RuntimeStatus>;
   onStatusChanged: (listener: (status: RuntimeStatus) => void) => () => void;
+  fixNow: () => Promise<RuntimeStatus>;
   tryAgain: () => Promise<RuntimeStatus>;
   restartApp: () => Promise<RuntimeStatus>;
+  copyReport: () => Promise<{ ok: boolean; report: string }>;
 };
 
 type AppShellProps = {
@@ -56,6 +59,21 @@ export function AppShell({
 
   return (
     <>
+      <MismatchRecoveryPanel
+        runtimeStatus={runtimeStatus}
+        onFixNow={() => {
+          runStatusAction(() => runtimeStatusBridge.fixNow());
+        }}
+        onTryAgain={() => {
+          runStatusAction(() => runtimeStatusBridge.tryAgain());
+        }}
+        onRestartApp={() => {
+          runStatusAction(() => runtimeStatusBridge.restartApp());
+        }}
+        onCopyReport={() => {
+          void runtimeStatusBridge.copyReport();
+        }}
+      />
       <RuntimeRecoveryBanner
         runtimeStatus={runtimeStatus}
         isVoiceActive={isVoiceActive}
