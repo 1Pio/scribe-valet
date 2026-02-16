@@ -4,7 +4,7 @@ import { createIdleRuntimeStatus, type RuntimeStatus } from "../../shared/types/
 
 describe("runtime controller", () => {
   it("returns current runtime status through ipc handler", async () => {
-    const handlers = new Map<string, (_event: unknown) => RuntimeStatus | Promise<RuntimeStatus>>();
+    const handlers = new Map<string, (_event: unknown) => unknown | Promise<unknown>>();
     const currentStatus = {
       ...createIdleRuntimeStatus(100),
       updatedAtMs: 200
@@ -22,6 +22,12 @@ describe("runtime controller", () => {
       },
       target: {
         send: vi.fn()
+      },
+      actions: {
+        fixNow: () => currentStatus,
+        retry: () => currentStatus,
+        restartApp: () => currentStatus,
+        copyReport: () => ({ ok: true, report: "status report" })
       }
     });
 
@@ -51,6 +57,12 @@ describe("runtime controller", () => {
       },
       target: {
         send
+      },
+      actions: {
+        fixNow: () => createIdleRuntimeStatus(),
+        retry: () => createIdleRuntimeStatus(),
+        restartApp: () => createIdleRuntimeStatus(),
+        copyReport: () => ({ ok: true, report: "status report" })
       }
     });
 
@@ -71,5 +83,44 @@ describe("runtime controller", () => {
       RUNTIME_CONTROLLER_CHANNELS.STATUS_CHANGED,
       nextStatus
     );
+  });
+
+  it("registers runtime recovery action handlers", async () => {
+    const handlers = new Map<string, (_event: unknown) => unknown | Promise<unknown>>();
+    const fixNow = vi.fn(() => createIdleRuntimeStatus(11));
+    const retry = vi.fn(() => createIdleRuntimeStatus(12));
+    const restartApp = vi.fn(() => createIdleRuntimeStatus(13));
+    const copyReport = vi.fn(() => ({ ok: true, report: "runtime report" }));
+
+    registerRuntimeController({
+      ipcMain: {
+        handle: (channel, handler) => {
+          handlers.set(channel, handler);
+        }
+      },
+      statusSource: {
+        getStatus: () => createIdleRuntimeStatus(),
+        onStatus: () => () => {}
+      },
+      target: {
+        send: vi.fn()
+      },
+      actions: {
+        fixNow,
+        retry,
+        restartApp,
+        copyReport
+      }
+    });
+
+    await handlers.get(RUNTIME_CONTROLLER_CHANNELS.FIX_NOW)?.({});
+    await handlers.get(RUNTIME_CONTROLLER_CHANNELS.RETRY)?.({});
+    await handlers.get(RUNTIME_CONTROLLER_CHANNELS.RESTART_APP)?.({});
+    await handlers.get(RUNTIME_CONTROLLER_CHANNELS.COPY_REPORT)?.({});
+
+    expect(fixNow).toHaveBeenCalledTimes(1);
+    expect(retry).toHaveBeenCalledTimes(1);
+    expect(restartApp).toHaveBeenCalledTimes(1);
+    expect(copyReport).toHaveBeenCalledTimes(1);
   });
 });
