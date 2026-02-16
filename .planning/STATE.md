@@ -12,11 +12,11 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 **Current Phase:** 1
 **Current Phase Name:** Runtime Guardrails and IPC Backbone
 **Total Phases:** 8
-**Current Plan:** 5
-**Total Plans in Phase:** 5
+**Current Plan:** 7
+**Total Plans in Phase:** 7
 **Status:** Phase complete — ready for verification
 **Last Activity:** 2026-02-16
-**Last Activity Description:** Completed 01-03 runtime recovery and mismatch UX mapping
+**Last Activity Description:** Completed 01-07 restart-app relaunch closure
 
 **Progress:** [██████████] 100%
 
@@ -40,6 +40,7 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 | Phase 01 P03 | 6 min | 3 tasks | 9 files |
 | Phase 01 P05 | 7 min | 3 tasks | 4 files |
 | Phase 01 P06 | 7 min | 3 tasks | 6 files |
+| Phase 01 P07 | 3 min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,9 @@ Recent decisions affecting current work:
 - [Phase 01]: Bound runtime recovery actions (fix-now/retry/restart-app) to supervisor reset behavior so UI actions return immediate RuntimeStatus updates.
 - [Phase 01]: Load BrowserWindow renderer via compiled script URL instead of inline require bootstrap to avoid page-context require failures.
 - [Phase 01]: Treat UAT as ready-for-human-retest after wiring closure, with command evidence recorded in verification artifacts.
+- [Phase 01]: Route runtime:restart-app through app.relaunch()+app.exit(0) and keep fix-now/retry as supervisor restarts.
+- [Phase 01]: Model restart-app as relaunch-intent acknowledgment payload instead of RuntimeStatus to avoid semantic conflation.
+- [Phase 01]: Treat UAT Test 3 as closed based on runtime validation plus focused main/preload/renderer test evidence.
 
 ### Pending Todos
 
@@ -79,6 +83,7 @@ None yet.
 
 ## Session
 
-**Last Date:** 2026-02-16T11:29:43.122Z
-**Stopped At:** Completed 01-06-PLAN.md
+**Last Date:** 2026-02-16T18:34:49.769Z
+**Stopped At:** Completed 01-07-PLAN.md
 **Resume File:** None
+* None
