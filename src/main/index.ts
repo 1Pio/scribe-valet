@@ -17,8 +17,8 @@ function createMainWindow(): BrowserWindow {
     webPreferences: {
       preload: preloadPath,
       contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true
+      nodeIntegration: true,
+      sandbox: false
     }
   });
 }
@@ -64,7 +64,9 @@ async function bootstrap(): Promise<void> {
   });
 
   const mainWindow = createMainWindow();
-  mainWindow.loadURL("data:text/html,<div id=\"root\"></div>");
+  const rendererEntryPath = path.join(__dirname, "..", "renderer", "index.js");
+  const rendererHtml = `data:text/html,<!doctype html><html><body><div id=\"root\"></div><script>require(${JSON.stringify(rendererEntryPath)});</script></body></html>`;
+  mainWindow.loadURL(rendererHtml);
 }
 
 app.whenReady().then(() => {

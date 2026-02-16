@@ -5,6 +5,7 @@
   "main": "dist/main/index.js",
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "dev": "npm run build && electron .",
     "test": "vitest run",
     "check:no-localhost": "node scripts/runtime/no-localhost-check.mjs",
     "validate:runtime": "npm run build && npm run check:no-localhost"
