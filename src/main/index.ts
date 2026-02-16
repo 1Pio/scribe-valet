@@ -1,5 +1,5 @@
 import path from "node:path";
-import { pathToFileURL } from "node:url";
+import { mkdir, writeFile } from "node:fs/promises";
 import { app, BrowserWindow, clipboard, ipcMain } from "electron";
 import { registerRuntimeController } from "./ipc/runtime-controller";
 import { registerRuntimeTrustController } from "./ipc/runtime-trust-controller";
@@ -98,8 +98,9 @@ async function bootstrap(): Promise<void> {
     supervisor.stop();
   });
 
-  const rendererEntryPath = path.join(__dirname, "..", "renderer", "index.js");
-  await mainWindow.loadURL(createRendererDocumentUrl(rendererEntryPath));
+  const rendererDirectory = path.join(__dirname, "..", "renderer");
+  await ensureRendererShell(rendererDirectory);
+  await mainWindow.loadFile(path.join(rendererDirectory, "index.html"));
 }
 
 app.whenReady().then(() => {
@@ -112,10 +113,24 @@ app.on("window-all-closed", () => {
   }
 });
 
-function createRendererDocumentUrl(rendererEntryPath: string): string {
-  const rendererEntryUrl = pathToFileURL(rendererEntryPath).toString();
-  const html = `<!doctype html><html><body><div id="root"></div><script src="${rendererEntryUrl}"></script></body></html>`;
-  return `data:text/html;charset=UTF-8,${encodeURIComponent(html)}`;
+async function ensureRendererShell(rendererDirectory: string): Promise<void> {
+  const html = [
+    "<!doctype html>",
+    "<html>",
+    "<head>",
+    "  <meta charset=\"UTF-8\" />",
+    "  <meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';\" />",
+    "  <title>Scribe-Valet</title>",
+    "</head>",
+    "<body>",
+    "  <div id=\"root\"></div>",
+    "  <script src=\"./index.browser.js\"></script>",
+    "</body>",
+    "</html>"
+  ].join("\n");
+
+  await mkdir(rendererDirectory, { recursive: true });
+  await writeFile(path.join(rendererDirectory, "index.html"), html, "utf8");
 }
 
 function restartSupervisor(supervisor: WorkerSupervisor): RuntimeStatus {

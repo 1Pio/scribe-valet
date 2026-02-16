@@ -4,7 +4,8 @@
   "description": "Local-first desktop voice utility runtime shell",
   "main": "dist/main/index.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && npm run build:renderer",
+    "build:renderer": "esbuild src/renderer/index.tsx --bundle --platform=browser --format=iife --target=es2022 --outfile=dist/renderer/index.browser.js",
     "dev": "npm run build && electron .",
     "test": "vitest run",
     "check:no-localhost": "node scripts/runtime/no-localhost-check.mjs",
@@ -21,6 +22,7 @@
     "@types/react-dom": "^19.1.7",
     "@types/semver": "^7.7.1",
     "electron": "^40.0.0",
+    "esbuild": "^0.25.10",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   }
