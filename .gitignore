@@ -1,0 +1,44 @@
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+out/
+release/
+
+# Test and coverage artifacts
+coverage/
+.nyc_output/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables and local overrides
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# Caches and temp files
+.cache/
+.tmp/
+tmp/
+*.tmp
+*.tsbuildinfo
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+
+# Electron packaging artifacts
+*.asar
