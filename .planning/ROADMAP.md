@@ -31,7 +31,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. User can run the app without any localhost HTTP services or open internal API ports.
   2. If a worker crashes during use, the app recovers worker connectivity automatically so the user can continue without relaunching.
   3. Incompatible worker handshake/version combinations are rejected with a clear recovery path instead of undefined behavior.
-**Plans**: 6 plans
+**Plans**: 7 plans
 
 Plans:
 - [ ] 01-01-PLAN.md - Bootstrap IPC-only runtime shell and localhost guardrails.
@@ -40,6 +40,7 @@ Plans:
 - [ ] 01-04-PLAN.md - Add local-only trust badge and privacy runtime checks diagnostics.
 - [ ] 01-05-PLAN.md - Close UAT boot/guardrail gaps and re-validate trust-flow checks.
 - [ ] 01-06-PLAN.md - Wire live supervisor/runtime recovery flow and refresh verification/UAT evidence.
+- [ ] 01-07-PLAN.md - Close diagnosed restart-app relaunch semantics gap from UAT mismatch recovery.
 
 ### Phase 2: Model and Storage Lifecycle
 **Goal**: Users have a predictable local model lifecycle with integrity checks and clear storage layout.
