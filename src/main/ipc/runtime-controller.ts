@@ -6,6 +6,11 @@ export type RuntimeCopyReportResult = {
   report: string;
 };
 
+export type RuntimeRestartAppResult = {
+  ok: true;
+  action: "relaunch-intent";
+};
+
 export const RUNTIME_CONTROLLER_CHANNELS = {
   GET_STATUS: IPC_CHANNELS.RUNTIME_GET_STATUS,
   STATUS_CHANGED: IPC_CHANNELS.RUNTIME_STATUS_CHANGED,
@@ -35,7 +40,7 @@ type RendererBroadcastTarget = {
 type RuntimeActionHandlers = {
   fixNow: () => RuntimeStatus | Promise<RuntimeStatus>;
   retry: () => RuntimeStatus | Promise<RuntimeStatus>;
-  restartApp: () => RuntimeStatus | Promise<RuntimeStatus>;
+  restartApp: () => RuntimeRestartAppResult | Promise<RuntimeRestartAppResult>;
   copyReport: () => RuntimeCopyReportResult | Promise<RuntimeCopyReportResult>;
 };
 

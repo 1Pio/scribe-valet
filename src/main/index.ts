@@ -1,7 +1,10 @@
 import path from "node:path";
 import { mkdir, writeFile } from "node:fs/promises";
 import { app, BrowserWindow, clipboard, ipcMain } from "electron";
-import { registerRuntimeController } from "./ipc/runtime-controller";
+import {
+  registerRuntimeController,
+  type RuntimeRestartAppResult
+} from "./ipc/runtime-controller";
 import { registerRuntimeTrustController } from "./ipc/runtime-trust-controller";
 import { WorkerSupervisor } from "./supervisor/worker-supervisor";
 import {
@@ -81,7 +84,7 @@ async function bootstrap(): Promise<void> {
     actions: {
       fixNow: () => restartSupervisor(supervisor),
       retry: () => restartSupervisor(supervisor),
-      restartApp: () => restartSupervisor(supervisor),
+      restartApp: () => restartApplication(),
       copyReport: () => {
         const report = buildRuntimeStatusReport(supervisor.getStatus());
         clipboard.writeText(report);
@@ -131,6 +134,18 @@ async function ensureRendererShell(rendererDirectory: string): Promise<void> {
 
   await mkdir(rendererDirectory, { recursive: true });
   await writeFile(path.join(rendererDirectory, "index.html"), html, "utf8");
+}
+
+function restartApplication(): RuntimeRestartAppResult {
+  app.relaunch();
+  setImmediate(() => {
+    app.exit(0);
+  });
+
+  return {
+    ok: true,
+    action: "relaunch-intent"
+  };
 }
 
 function restartSupervisor(supervisor: WorkerSupervisor): RuntimeStatus {
