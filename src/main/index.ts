@@ -7,6 +7,7 @@ import {
 } from "./ipc/runtime-controller";
 import { registerRuntimeTrustController } from "./ipc/runtime-trust-controller";
 import { WorkerSupervisor } from "./supervisor/worker-supervisor";
+import { installRendererRecovery } from "./window/renderer-recovery";
 import {
   createHandshakeResponse,
   isHandshakeRequestPayload,
@@ -74,6 +75,10 @@ async function bootstrap(): Promise<void> {
   supervisor.start();
 
   const mainWindow = createMainWindow();
+  const disposeRendererRecovery = installRendererRecovery({
+    webContents: mainWindow.webContents,
+    requestAppRelaunch: restartApplication
+  });
   const disposeRuntimeController = registerRuntimeController({
     ipcMain,
     statusSource: {
@@ -97,6 +102,7 @@ async function bootstrap(): Promise<void> {
   });
 
   mainWindow.on("closed", () => {
+    disposeRendererRecovery();
     disposeRuntimeController();
     supervisor.stop();
   });
