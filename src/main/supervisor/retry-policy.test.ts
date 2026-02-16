@@ -4,6 +4,8 @@ import { RETRY_BACKOFF_MS, decideRetry, getRetryDelayMs } from "./retry-policy";
 import { WorkerSupervisor } from "./worker-supervisor";
 
 class FakeWorkerProcess extends EventEmitter {
+  public postMessage(): void {}
+
   public kill(): void {}
 }
 

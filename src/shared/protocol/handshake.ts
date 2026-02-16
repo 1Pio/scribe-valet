@@ -12,9 +12,32 @@ export type HandshakeRequestPayload = {
 
 export type HandshakeResponsePayload = {
   accepted: boolean;
-  reason: "ok" | "protocol-mismatch";
+  reason: "ok" | "protocol-mismatch" | "version-mismatch";
   capabilities: string[];
 };
+
+export type WorkerHandshakeInitPayload = {
+  expectedProtocolId: string;
+  expectedProtocolVersion: number;
+  expectedWorkerVersionRange: string;
+};
+
+export type WorkerHandshakeHelloPayload = {
+  protocolId: string;
+  protocolVersion: number;
+  workerVersion: string;
+  capabilities: string[];
+};
+
+export type WorkerHandshakeMessage =
+  | {
+      kind: "handshake:init";
+      payload: WorkerHandshakeInitPayload;
+    }
+  | {
+      kind: "handshake:hello";
+      payload: WorkerHandshakeHelloPayload;
+    };
 
 export type HandshakeRequestEnvelope = IpcEnvelope<HandshakeRequestPayload>;
 export type HandshakeResponseEnvelope = IpcEnvelope<HandshakeResponsePayload>;
@@ -57,4 +80,23 @@ export function isHandshakeRequestPayload(
     candidate.capabilities.every((entry) => typeof entry === "string");
 
   return hasVersions && hasCapabilities;
+}
+
+export function isWorkerHandshakeHelloPayload(
+  value: unknown
+): value is WorkerHandshakeHelloPayload {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Partial<WorkerHandshakeHelloPayload>;
+  const hasProtocol =
+    typeof candidate.protocolId === "string" &&
+    typeof candidate.protocolVersion === "number";
+  const hasVersion = typeof candidate.workerVersion === "string";
+  const hasCapabilities =
+    Array.isArray(candidate.capabilities) &&
+    candidate.capabilities.every((entry) => typeof entry === "string");
+
+  return hasProtocol && hasVersion && hasCapabilities;
 }
