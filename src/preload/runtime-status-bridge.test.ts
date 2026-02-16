@@ -3,13 +3,28 @@ import { IPC_CHANNELS } from "../shared/protocol/ipc-envelope";
 import { createRuntimeStatusBridge } from "./runtime-status-bridge";
 
 describe("runtime status bridge", () => {
+  const validStatus = {
+    state: "idle",
+    updatedAtMs: 100,
+    delayedThresholdMs: 3000,
+    actionThresholdMs: 9000,
+    recovery: {
+      attempt: 0,
+      maxAttempts: 3,
+      nextRetryInMs: null,
+      startedAtMs: null,
+      elapsedMs: 0
+    },
+    mismatch: null
+  };
+
   it("invokes runtime status and action channels", async () => {
     const invoke = vi
       .fn()
-      .mockResolvedValueOnce({ state: "idle" })
-      .mockResolvedValueOnce({ state: "reconnecting" })
-      .mockResolvedValueOnce({ state: "reconnecting" })
-      .mockResolvedValueOnce({ state: "exhausted" })
+      .mockResolvedValueOnce(validStatus)
+      .mockResolvedValueOnce({ ...validStatus, state: "reconnecting" })
+      .mockResolvedValueOnce({ ...validStatus, state: "reconnecting" })
+      .mockResolvedValueOnce({ ...validStatus, state: "exhausted" })
       .mockResolvedValueOnce({ ok: true, report: "runtime report" });
     const bridge = createRuntimeStatusBridge({
       invoke,
@@ -49,10 +64,20 @@ describe("runtime status bridge", () => {
     );
 
     const subscribedHandler = on.mock.calls[0]?.[1] as
-      | ((event: unknown, payload: { state: string }) => void)
+      | ((event: unknown, payload: unknown) => void)
       | undefined;
-    subscribedHandler?.({}, { state: "delayed" });
-    expect(listener).toHaveBeenCalledWith({ state: "delayed" });
+    const delayedStatus = {
+      ...validStatus,
+      state: "delayed",
+      recovery: {
+        ...validStatus.recovery,
+        attempt: 2,
+        elapsedMs: 3200
+      }
+    };
+
+    subscribedHandler?.({}, delayedStatus);
+    expect(listener).toHaveBeenCalledWith(delayedStatus);
 
     unsubscribe();
 
@@ -61,5 +86,35 @@ describe("runtime status bridge", () => {
       IPC_CHANNELS.RUNTIME_STATUS_CHANGED,
       subscribedHandler
     );
+  });
+
+  it("ignores malformed status payloads from subscription", () => {
+    const on = vi.fn();
+    const bridge = createRuntimeStatusBridge({
+      invoke: vi.fn(),
+      on,
+      off: vi.fn()
+    });
+
+    const listener = vi.fn();
+    bridge.onStatusChanged(listener);
+
+    const subscribedHandler = on.mock.calls[0]?.[1] as
+      | ((event: unknown, payload: unknown) => void)
+      | undefined;
+
+    subscribedHandler?.({}, { state: "reconnecting" });
+
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it("throws for malformed invoke payloads", async () => {
+    const bridge = createRuntimeStatusBridge({
+      invoke: vi.fn().mockResolvedValue({ state: "idle" }),
+      on: vi.fn(),
+      off: vi.fn()
+    });
+
+    await expect(bridge.getStatus()).rejects.toThrow("invalid runtime status payload");
   });
 });

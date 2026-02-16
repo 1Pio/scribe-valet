@@ -20,7 +20,7 @@ export type RuntimeBridge = {
   runtimeTrust: RuntimeTrustBridge;
 };
 
-const runtimeBridge: RuntimeBridge = {
+const runtimeBridge: RuntimeBridge = Object.freeze({
   ping: () => ipcRenderer.invoke(IPC_CHANNELS.RUNTIME_PING),
   handshake: () =>
     ipcRenderer.invoke(
@@ -36,6 +36,6 @@ const runtimeBridge: RuntimeBridge = {
   ),
   runtimeStatus: createRuntimeStatusBridge(),
   runtimeTrust: createRuntimeTrustBridge()
-};
+});
 
 contextBridge.exposeInMainWorld("scribeValet", runtimeBridge);
