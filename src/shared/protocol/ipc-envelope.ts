@@ -4,7 +4,10 @@ export const protocolVersion = 1 as const;
 export const IPC_CHANNELS = {
   HANDSHAKE_INIT: "runtime:handshake:init",
   HANDSHAKE_ACK: "runtime:handshake:ack",
-  RUNTIME_PING: "runtime:ping"
+  RUNTIME_PING: "runtime:ping",
+  RUNTIME_TRUST_GET: "runtime:trust:get",
+  RUNTIME_TRUST_RETRY: "runtime:trust:retry",
+  RUNTIME_TRUST_COPY_REPORT: "runtime:trust:copy-report"
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];

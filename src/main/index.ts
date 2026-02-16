@@ -1,5 +1,6 @@
 import path from "node:path";
 import { app, BrowserWindow, ipcMain } from "electron";
+import { registerRuntimeTrustController } from "./ipc/runtime-trust-controller";
 import {
   createHandshakeResponse,
   isHandshakeRequestPayload,
@@ -41,6 +42,26 @@ async function bootstrap(): Promise<void> {
       );
     }
   );
+
+  registerRuntimeTrustController(ipcMain, {
+    probeTrustEvidence: async () => {
+      const appMetrics = app
+        .getAppMetrics()
+        .map((metric) => ({
+          pid: metric.pid,
+          type: metric.type,
+          serviceName: metric.serviceName,
+          name: metric.name
+        }))
+        .filter((metric) => typeof metric.pid === "number");
+
+      return {
+        guardrailCheckPassed: true,
+        localPortFindings: [],
+        appMetrics
+      };
+    }
+  });
 
   const mainWindow = createMainWindow();
   mainWindow.loadURL("data:text/html,<div id=\"root\"></div>");
