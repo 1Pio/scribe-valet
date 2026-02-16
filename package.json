@@ -1,0 +1,24 @@
+{
+  "name": "scribe-valet",
+  "version": "0.1.0",
+  "description": "Local-first desktop voice utility runtime shell",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "check:no-localhost": "node scripts/runtime/no-localhost-check.mjs",
+    "validate:runtime": "npm run build && npm run check:no-localhost"
+  },
+  "dependencies": {
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "@types/react": "^19.1.10",
+    "@types/react-dom": "^19.1.7",
+    "electron": "^40.0.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}
