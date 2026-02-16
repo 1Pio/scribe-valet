@@ -26,7 +26,7 @@ describe("runtime controller", () => {
       actions: {
         fixNow: () => currentStatus,
         retry: () => currentStatus,
-        restartApp: () => currentStatus,
+        restartApp: () => ({ ok: true, action: "relaunch-intent" }),
         copyReport: () => ({ ok: true, report: "status report" })
       }
     });
@@ -61,7 +61,7 @@ describe("runtime controller", () => {
       actions: {
         fixNow: () => createIdleRuntimeStatus(),
         retry: () => createIdleRuntimeStatus(),
-        restartApp: () => createIdleRuntimeStatus(),
+        restartApp: () => ({ ok: true, action: "relaunch-intent" }),
         copyReport: () => ({ ok: true, report: "status report" })
       }
     });
@@ -89,7 +89,10 @@ describe("runtime controller", () => {
     const handlers = new Map<string, (_event: unknown) => unknown | Promise<unknown>>();
     const fixNow = vi.fn(() => createIdleRuntimeStatus(11));
     const retry = vi.fn(() => createIdleRuntimeStatus(12));
-    const restartApp = vi.fn(() => createIdleRuntimeStatus(13));
+    const restartApp = vi.fn(() => ({
+      ok: true as const,
+      action: "relaunch-intent" as const
+    }));
     const copyReport = vi.fn(() => ({ ok: true, report: "runtime report" }));
 
     registerRuntimeController({
@@ -115,12 +118,13 @@ describe("runtime controller", () => {
 
     await handlers.get(RUNTIME_CONTROLLER_CHANNELS.FIX_NOW)?.({});
     await handlers.get(RUNTIME_CONTROLLER_CHANNELS.RETRY)?.({});
-    await handlers.get(RUNTIME_CONTROLLER_CHANNELS.RESTART_APP)?.({});
+    const restartResult = await handlers.get(RUNTIME_CONTROLLER_CHANNELS.RESTART_APP)?.({});
     await handlers.get(RUNTIME_CONTROLLER_CHANNELS.COPY_REPORT)?.({});
 
     expect(fixNow).toHaveBeenCalledTimes(1);
     expect(retry).toHaveBeenCalledTimes(1);
     expect(restartApp).toHaveBeenCalledTimes(1);
+    expect(restartResult).toEqual({ ok: true, action: "relaunch-intent" });
     expect(copyReport).toHaveBeenCalledTimes(1);
   });
 });

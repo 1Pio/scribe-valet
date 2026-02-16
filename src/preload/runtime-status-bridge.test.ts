@@ -24,7 +24,7 @@ describe("runtime status bridge", () => {
       .mockResolvedValueOnce(validStatus)
       .mockResolvedValueOnce({ ...validStatus, state: "reconnecting" })
       .mockResolvedValueOnce({ ...validStatus, state: "reconnecting" })
-      .mockResolvedValueOnce({ ...validStatus, state: "exhausted" })
+      .mockResolvedValueOnce({ ok: true, action: "relaunch-intent" })
       .mockResolvedValueOnce({ ok: true, report: "runtime report" });
     const bridge = createRuntimeStatusBridge({
       invoke,
@@ -35,7 +35,10 @@ describe("runtime status bridge", () => {
     await bridge.getStatus();
     await bridge.fixNow();
     await bridge.tryAgain();
-    await bridge.restartApp();
+    await expect(bridge.restartApp()).resolves.toEqual({
+      ok: true,
+      action: "relaunch-intent"
+    });
     await bridge.copyReport();
 
     expect(invoke).toHaveBeenNthCalledWith(1, IPC_CHANNELS.RUNTIME_GET_STATUS);
@@ -116,5 +119,15 @@ describe("runtime status bridge", () => {
     });
 
     await expect(bridge.getStatus()).rejects.toThrow("invalid runtime status payload");
+  });
+
+  it("throws for malformed restart-app payloads", async () => {
+    const bridge = createRuntimeStatusBridge({
+      invoke: vi.fn().mockResolvedValue({ ok: true }),
+      on: vi.fn(),
+      off: vi.fn()
+    });
+
+    await expect(bridge.restartApp()).rejects.toThrow("invalid runtime restart payload");
   });
 });

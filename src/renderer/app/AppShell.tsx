@@ -3,12 +3,17 @@ import { createIdleRuntimeStatus, type RuntimeStatus } from "../../shared/types/
 import { MismatchRecoveryPanel } from "../runtime-status/MismatchRecoveryPanel";
 import { RuntimeRecoveryBanner } from "../runtime-status/RuntimeRecoveryBanner";
 
+type RuntimeRestartAppResult = {
+  ok: true;
+  action: "relaunch-intent";
+};
+
 type RuntimeStatusBridge = {
   getStatus: () => Promise<RuntimeStatus>;
   onStatusChanged: (listener: (status: RuntimeStatus) => void) => () => void;
   fixNow: () => Promise<RuntimeStatus>;
   tryAgain: () => Promise<RuntimeStatus>;
-  restartApp: () => Promise<RuntimeStatus>;
+  restartApp: () => Promise<RuntimeRestartAppResult>;
   copyReport: () => Promise<{ ok: boolean; report: string }>;
 };
 
@@ -68,7 +73,7 @@ export function AppShell({
           runStatusAction(() => runtimeStatusBridge.tryAgain());
         }}
         onRestartApp={() => {
-          runStatusAction(() => runtimeStatusBridge.restartApp());
+          void runtimeStatusBridge.restartApp();
         }}
         onCopyReport={() => {
           void runtimeStatusBridge.copyReport();
@@ -81,7 +86,7 @@ export function AppShell({
           runStatusAction(() => runtimeStatusBridge.tryAgain());
         }}
         onRestartApp={() => {
-          runStatusAction(() => runtimeStatusBridge.restartApp());
+          void runtimeStatusBridge.restartApp();
         }}
       />
       {children}

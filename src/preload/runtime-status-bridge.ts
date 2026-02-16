@@ -7,6 +7,11 @@ export type RuntimeCopyReportResult = {
   report: string;
 };
 
+export type RuntimeRestartAppResult = {
+  ok: true;
+  action: "relaunch-intent";
+};
+
 type RuntimeStatusIpcRenderer = {
   invoke: (channel: string, ...args: unknown[]) => Promise<unknown>;
   on: (channel: string, listener: (event: unknown, payload: RuntimeStatus) => void) => void;
@@ -34,12 +39,16 @@ function isRuntimeCopyReportResult(value: unknown): value is RuntimeCopyReportRe
   return isRecord(value) && typeof value.ok === "boolean" && typeof value.report === "string";
 }
 
+function isRuntimeRestartAppResult(value: unknown): value is RuntimeRestartAppResult {
+  return isRecord(value) && value.ok === true && value.action === "relaunch-intent";
+}
+
 export type RuntimeStatusBridge = {
   getStatus: () => Promise<RuntimeStatus>;
   onStatusChanged: (listener: (status: RuntimeStatus) => void) => () => void;
   fixNow: () => Promise<RuntimeStatus>;
   tryAgain: () => Promise<RuntimeStatus>;
-  restartApp: () => Promise<RuntimeStatus>;
+  restartApp: () => Promise<RuntimeRestartAppResult>;
   copyReport: () => Promise<RuntimeCopyReportResult>;
 };
 
@@ -85,13 +94,13 @@ export function createRuntimeStatusBridge(
 
       return status;
     },
-    async restartApp(): Promise<RuntimeStatus> {
-      const status = await client.invoke(IPC_CHANNELS.RUNTIME_RESTART_APP);
-      if (!isRuntimeStatus(status)) {
-        throw new Error("Received invalid runtime status payload from main process.");
+    async restartApp(): Promise<RuntimeRestartAppResult> {
+      const result = await client.invoke(IPC_CHANNELS.RUNTIME_RESTART_APP);
+      if (!isRuntimeRestartAppResult(result)) {
+        throw new Error("Received invalid runtime restart payload from main process.");
       }
 
-      return status;
+      return result;
     },
     async copyReport(): Promise<RuntimeCopyReportResult> {
       const result = await client.invoke(IPC_CHANNELS.RUNTIME_COPY_REPORT);
