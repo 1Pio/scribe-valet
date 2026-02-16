@@ -76,7 +76,16 @@ async function bootstrap(): Promise<void> {
 
   const mainWindow = createMainWindow();
   const disposeRendererRecovery = installRendererRecovery({
-    webContents: mainWindow.webContents,
+    webContents: {
+      isDestroyed: () => mainWindow.webContents.isDestroyed(),
+      reload: () => mainWindow.webContents.reload(),
+      on: (channel, listener) => {
+        mainWindow.webContents.on(channel as never, listener as never);
+      },
+      removeListener: (channel, listener) => {
+        mainWindow.webContents.removeListener(channel as never, listener as never);
+      }
+    },
     requestAppRelaunch: restartApplication
   });
   const disposeRuntimeController = registerRuntimeController({

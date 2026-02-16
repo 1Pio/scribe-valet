@@ -1,9 +1,9 @@
 ---
 status: rechecked
 phase: 01-runtime-guardrails-and-ipc-backbone
-source: [01-01-SUMMARY.md, 01-02-SUMMARY.md, 01-03-SUMMARY.md, 01-04-SUMMARY.md, 01-05-SUMMARY.md, 01-06-SUMMARY.md]
+source: [01-01-SUMMARY.md, 01-02-SUMMARY.md, 01-03-SUMMARY.md, 01-04-SUMMARY.md, 01-05-SUMMARY.md, 01-06-SUMMARY.md, 01-07-SUMMARY.md, 01-08-SUMMARY.md]
 started: 2026-02-16T10:44:45.304Z
-updated: 2026-02-16T18:33:00Z
+updated: 2026-02-17T00:21:00Z
 ---
 
 ## Current Test
@@ -16,9 +16,10 @@ updated: 2026-02-16T18:33:00Z
 expected: Launch the app with `npm run dev`. The first screen shows `Scribe-Valet` and `Runtime bridge status: connected`.
 result: pass
 
-### 2. Worker crash auto-recovers without relaunch
-expected: If the runtime worker is interrupted, the app transitions to reconnecting and then returns to ready/connected automatically without requiring an app restart.
+### 2. Runtime crash continuity (worker + renderer)
+expected: If the runtime worker is interrupted, reconnecting resolves automatically without app relaunch. If a renderer process is force-killed, the app attempts deterministic in-place renderer reload and, on repeated failure, requests controlled app relaunch fallback instead of leaving a persistent blank shell.
 result: pass
+reported: "Added dedicated renderer lifecycle recovery hooks for render-process-gone/unresponsive/did-fail-load. Focused tests now prove reload-first behavior, repeated-failure relaunch fallback, and runtime status channel continuity when renderer send fails."
 
 ### 3. Incompatible handshake is rejected with recovery guidance
 expected: When worker protocol/version is incompatible, the app enters mismatch state and shows a clear recovery path (fix-first guidance with optional details) instead of hanging.
@@ -48,12 +49,28 @@ skipped: 1
 
 ## Gaps
 
-None - diagnosed restart-app relaunch mismatch closed in Plan 01-07; skipped Test 6 remains unchanged.
+None - diagnosed restart-app relaunch mismatch closed in Plan 01-07 and renderer crash blank-window continuity gap closed in Plan 01-08 with deterministic recovery and focused tests; skipped Test 6 remains unchanged.
+
+## Renderer Crash Recheck
+
+### Manual continuity steps
+
+1. Start app with `npm run dev`.
+2. Ensure the main UI is visible and runtime status is connected.
+3. Force-kill an Electron process with type `renderer`.
+4. Return to the app window and observe behavior.
+
+### Expected outcome
+
+- App does not remain on a permanent blank shell.
+- Main process attempts immediate in-place renderer reload.
+- If recovery attempts are exhausted, controlled relaunch fallback executes via restart intent.
+- Runtime actions (`fix-now`, `try-again`, `restart-app`) keep existing semantics.
 
 ## Recheck Commands
 
 ```bash
 npm run validate:runtime
-npm run test -- src/main/ipc/runtime-controller.test.ts src/preload/runtime-status-bridge.test.ts src/renderer/runtime-status/runtime-state-machine.test.ts src/renderer/runtime-status/MismatchRecoveryPanel.test.tsx
+npm run test -- src/main/window/renderer-recovery.test.ts src/main/ipc/runtime-controller.test.ts src/renderer/runtime-status/runtime-state-machine.test.ts
 npm run dev
 ```
