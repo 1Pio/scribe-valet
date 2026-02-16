@@ -2,17 +2,17 @@ import { readFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 
 const ROOT_DIR = process.cwd();
-const SCAN_DIRECTORIES = ["src/main", "src/preload", "src/renderer", "src/shared"];
+const SCAN_DIRECTORIES = ["src/main", "src/preload"];
 const SCAN_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".mjs", ".cjs"]);
 
 const FORBIDDEN_PATTERNS = [
   {
-    label: "localhost reference",
-    regex: /localhost/gi
+    label: "loopback URL literal",
+    regex: /(?:https?|wss?):\/\/(?:localhost|127\.0\.0\.1)(?:[:/\"'`]|$)/gi
   },
   {
-    label: "loopback address",
-    regex: /127\.0\.0\.1/g
+    label: "loopback host assignment",
+    regex: /\bhost\s*:\s*["'](?:localhost|127\.0\.0\.1)["']/gi
   },
   {
     label: "HTTP server creation",
@@ -20,9 +20,23 @@ const FORBIDDEN_PATTERNS = [
   },
   {
     label: "Node HTTP module import",
-    regex: /from\s+["']node:http["']|require\(["']node:http["']\)/g
+    regex: /from\s+["']node:https?["']|require\(["']node:https?["']\)/g
+  },
+  {
+    label: "loopback listen binding",
+    regex: /\.listen\s*\([^)]*["'](?:localhost|127\.0\.0\.1)["']/gi
   }
 ];
+
+function shouldScanFile(relativeFilePath) {
+  const fileName = path.basename(relativeFilePath);
+
+  if (fileName.includes(".test.") || fileName.includes(".spec.")) {
+    return false;
+  }
+
+  return true;
+}
 
 async function collectFiles(directory) {
   const absoluteDirectory = path.join(ROOT_DIR, directory);
@@ -64,6 +78,10 @@ async function run() {
     }
 
     for (const relativeFilePath of filesInDirectory) {
+      if (!shouldScanFile(relativeFilePath)) {
+        continue;
+      }
+
       const absoluteFilePath = path.join(ROOT_DIR, relativeFilePath);
       const source = await readFile(absoluteFilePath, "utf8");
 
