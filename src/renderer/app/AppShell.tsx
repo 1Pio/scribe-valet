@@ -1,5 +1,7 @@
 import { useEffect, useState, type ReactElement } from "react";
 import { createIdleRuntimeStatus, type RuntimeStatus } from "../../shared/types/runtime-status";
+import type { ModelLifecycleBridge } from "../../preload/model-lifecycle-bridge";
+import { ReadinessGate } from "../model-lifecycle/ReadinessGate";
 import { MismatchRecoveryPanel } from "../runtime-status/MismatchRecoveryPanel";
 import { RuntimeRecoveryBanner } from "../runtime-status/RuntimeRecoveryBanner";
 
@@ -19,12 +21,14 @@ type RuntimeStatusBridge = {
 
 type AppShellProps = {
   runtimeStatusBridge: RuntimeStatusBridge;
+  modelLifecycleBridge: ModelLifecycleBridge;
   isVoiceActive: boolean;
   children: ReactElement;
 };
 
 export function AppShell({
   runtimeStatusBridge,
+  modelLifecycleBridge,
   isVoiceActive,
   children
 }: AppShellProps): ReactElement {
@@ -89,7 +93,7 @@ export function AppShell({
           void runtimeStatusBridge.restartApp();
         }}
       />
-      {children}
+      <ReadinessGate modelLifecycleBridge={modelLifecycleBridge}>{children}</ReadinessGate>
     </>
   );
 }

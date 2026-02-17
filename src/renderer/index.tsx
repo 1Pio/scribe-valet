@@ -20,7 +20,11 @@ async function render(): Promise<void> {
 
   const root = createRoot(rootElement);
   root.render(
-    <AppShell runtimeStatusBridge={window.scribeValet.runtimeStatus} isVoiceActive={true}>
+    <AppShell
+      runtimeStatusBridge={window.scribeValet.runtimeStatus}
+      modelLifecycleBridge={window.scribeValet.modelLifecycle}
+      isVoiceActive={true}
+    >
       <main>
         <header style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
           <h1>Scribe-Valet</h1>
