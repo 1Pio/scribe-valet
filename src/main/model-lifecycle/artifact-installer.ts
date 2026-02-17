@@ -211,7 +211,7 @@ async function downloadWithResumeFallback(input: {
     };
   }
 
-  if (response.status !== 200) {
+  if (response.status !== 200 && response.status !== 416) {
     throw new ArtifactInstallError({
       artifactId: input.artifact.id,
       code: "http-error",
