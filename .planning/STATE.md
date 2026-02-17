@@ -14,11 +14,11 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 **Total Phases:** 8
 **Current Plan:** 5
 **Total Plans in Phase:** 5
-**Status:** Ready to execute
+**Status:** Phase complete — ready for verification
 **Last Activity:** 2026-02-17
-**Last Activity Description:** Completed 02-01 storage topology and override persistence plan
+**Last Activity Description:** Completed 02-04 readiness/download/storage UX plan
 
-**Progress:** [█████████░] 92%
+**Progress:** [██████████] 100%
 
 ## Performance Metrics
 
@@ -47,6 +47,7 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 | Phase 02 P02 | 7 min | 3 tasks | 7 files |
 | Phase 02 P03 | 3 min | 2 tasks | 4 files |
 | Phase 02 P05 | 6 min | 2 tasks | 6 files |
+| Phase 02 P04 | 5h 22m | 3 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -93,6 +94,9 @@ Recent decisions affecting current work:
 - [Phase 02]: Controller validates change-path payload shape in main and forwards normalized customRoot strings to ModelLifecycleService.
 - [Phase 02]: Preload modelLifecycle bridge validates lifecycle invoke and subscription payloads before exposing data to renderer code.
 - [Phase 02]: Bootstrap starts ModelLifecycleService startup checks so readiness state is available before normal UI flow.
+- [Phase 02]: Startup readiness uses one active lifecycle dialog surface at a time and suppresses competing overlays while blocked flows are open.
+- [Phase 02]: Bundle confirmation remains one-time and user-friendly, with explicit percent text shown only during active downloads.
+- [Phase 02]: Recovery controls stay accessible even when startup gate blocks normal app shell rendering.
 
 ### Pending Todos
 
@@ -104,6 +108,6 @@ None.
 
 ## Session
 
-**Last Date:** 2026-02-17T15:51:54.463Z
-**Stopped At:** Completed 02-05-PLAN.md
+**Last Date:** 2026-02-17T21:22:10.494Z
+**Stopped At:** Completed 02-04-PLAN.md
 **Resume File:** None

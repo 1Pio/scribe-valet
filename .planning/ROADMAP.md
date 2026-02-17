@@ -13,7 +13,7 @@ Scribe-Valet v1 is sequenced to establish local-only runtime trust first, then d
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Runtime Guardrails and IPC Backbone** - Local runtime stays no-ports and recovers from worker failures.
-- [ ] **Phase 2: Model and Storage Lifecycle** - Model assets are checked, downloaded, verified, and stored predictably.
+- [x] **Phase 2: Model and Storage Lifecycle** - Model assets are checked, downloaded, verified, and stored predictably. (completed 2026-02-17)
 - [ ] **Phase 3: Device Selection and Fallback Behavior** - Compute routing is user-controllable with reliable CPU fallback.
 - [ ] **Phase 4: Dictation Capture and Local Transcription** - Hotkey-to-transcript flow works offline with microphone control.
 - [ ] **Phase 5: Dictation Enrichment and Output Reliability** - Dictation output is cleaned, inserted, and recoverable on failure.
@@ -54,11 +54,11 @@ Plans:
 **Plans**: 5 plans
 
 Plans:
-- [ ] 02-01-PLAN.md - Establish storage topology, defaults, and hybrid override persistence.
-- [ ] 02-02-PLAN.md - Build resumable stage-verify-promote artifact installer for required model bundle.
-- [ ] 02-03-PLAN.md - Implement main-process lifecycle orchestration core and shared contracts.
-- [ ] 02-05-PLAN.md - Wire lifecycle IPC/preload/bootstrap boundaries for renderer-safe access.
-- [ ] 02-04-PLAN.md - Deliver readiness/download/storage UI with manual startup-flow verification.
+- [x] 02-01-PLAN.md - Establish storage topology, defaults, and hybrid override persistence.
+- [x] 02-02-PLAN.md - Build resumable stage-verify-promote artifact installer for required model bundle.
+- [x] 02-03-PLAN.md - Implement main-process lifecycle orchestration core and shared contracts.
+- [x] 02-05-PLAN.md - Wire lifecycle IPC/preload/bootstrap boundaries for renderer-safe access.
+- [x] 02-04-PLAN.md - Deliver readiness/download/storage UI with manual startup-flow verification.
 
 ### Phase 3: Device Selection and Fallback Behavior
 **Goal**: Users can control compute device policy while keeping reliable execution on CPU-capable systems.
@@ -156,7 +156,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Runtime Guardrails and IPC Backbone | 8/8 | Complete | 2026-02-17 |
-| 2. Model and Storage Lifecycle | 0/TBD | Not started | - |
+| 2. Model and Storage Lifecycle | 5/5 | Complete | 2026-02-17 |
 | 3. Device Selection and Fallback Behavior | 0/TBD | Not started | - |
 | 4. Dictation Capture and Local Transcription | 0/TBD | Not started | - |
 | 5. Dictation Enrichment and Output Reliability | 0/TBD | Not started | - |
