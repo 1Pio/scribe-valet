@@ -12,13 +12,13 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 **Current Phase:** 2
 **Current Phase Name:** Model and Storage Lifecycle
 **Total Phases:** 8
-**Current Plan:** 2
+**Current Plan:** 3
 **Total Plans in Phase:** 5
-**Status:** In progress
+**Status:** Ready to execute
 **Last Activity:** 2026-02-17
 **Last Activity Description:** Completed 02-01 storage topology and override persistence plan
 
-**Progress:** [███████░░░] 69%
+**Progress:** [████████░░] 77%
 
 ## Performance Metrics
 
@@ -44,6 +44,7 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 | Phase 01 P08 | planned | 3 tasks | 7 files |
 | Phase 01 P08 | 6 min | 3 tasks | 7 files |
 | Phase 02 P01 | 4 min | 3 tasks | 5 files |
+| Phase 02 P02 | 7 min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,9 @@ Recent decisions affecting current work:
 - [Phase 01]: Close the renderer blank-window gap with code/test evidence plus explicit manual recheck steps in UAT notes.
 - [Phase 02]: Use one shared custom root with per-category override precedence for deterministic storage path resolution.
 - [Phase 02]: Persist normalized storage overrides in userData JSON so startup and settings share one source of truth.
+- [Phase 02]: Fixed Phase 2 Plan 2 scope to a required STT/LLM/TTS bundle manifest with stable IDs and user-facing labels.
+- [Phase 02]: Resume logic now uses validator-aware range semantics and restarts full downloads on 200/416 fallback responses.
+- [Phase 02]: Installer failures are classified with deterministic code/hint diagnostics for downstream retry policy handling.
 
 ### Pending Todos
 
@@ -92,6 +96,6 @@ None.
 
 ## Session
 
-**Last Date:** 2026-02-17T15:33:12.771Z
-**Stopped At:** Completed 02-01-PLAN.md
+**Last Date:** 2026-02-17T15:35:17.320Z
+**Stopped At:** Completed 02-02-PLAN.md
 **Resume File:** None
