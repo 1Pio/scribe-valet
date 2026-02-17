@@ -12,13 +12,13 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 **Current Phase:** 2
 **Current Phase Name:** Model and Storage Lifecycle
 **Total Phases:** 8
-**Current Plan:** 3
+**Current Plan:** 4
 **Total Plans in Phase:** 5
 **Status:** Ready to execute
 **Last Activity:** 2026-02-17
 **Last Activity Description:** Completed 02-01 storage topology and override persistence plan
 
-**Progress:** [████████░░] 77%
+**Progress:** [█████████░] 85%
 
 ## Performance Metrics
 
@@ -45,6 +45,7 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 | Phase 01 P08 | 6 min | 3 tasks | 7 files |
 | Phase 02 P01 | 4 min | 3 tasks | 5 files |
 | Phase 02 P02 | 7 min | 3 tasks | 7 files |
+| Phase 02 P03 | 3 min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,9 @@ Recent decisions affecting current work:
 - [Phase 02]: Fixed Phase 2 Plan 2 scope to a required STT/LLM/TTS bundle manifest with stable IDs and user-facing labels.
 - [Phase 02]: Resume logic now uses validator-aware range semantics and restarts full downloads on 200/416 fallback responses.
 - [Phase 02]: Installer failures are classified with deterministic code/hint diagnostics for downstream retry policy handling.
+- [Phase 02]: Use ModelLifecycleService in main process as the lifecycle source of truth that emits deterministic snapshots.
+- [Phase 02]: Keep baseline install retries at 2 automatic retries (3 attempts total) and only expand transient network/server failures to 5 attempts.
+- [Phase 02]: Classify checksum mismatch as deterministic verification failure and never expand retry count for it.
 
 ### Pending Todos
 
@@ -96,6 +100,6 @@ None.
 
 ## Session
 
-**Last Date:** 2026-02-17T15:35:17.320Z
-**Stopped At:** Completed 02-02-PLAN.md
+**Last Date:** 2026-02-17T15:42:53.867Z
+**Stopped At:** Completed 02-03-PLAN.md
 **Resume File:** None
