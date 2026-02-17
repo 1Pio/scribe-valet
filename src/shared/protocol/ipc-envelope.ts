@@ -11,6 +11,13 @@ export const IPC_CHANNELS = {
   RUNTIME_RETRY: "runtime:retry",
   RUNTIME_RESTART_APP: "runtime:restart-app",
   RUNTIME_COPY_REPORT: "runtime:copy-report",
+  MODEL_LIFECYCLE_GET_STATE: "model-lifecycle:get-state",
+  MODEL_LIFECYCLE_STATUS_CHANGED: "model-lifecycle:status:changed",
+  MODEL_LIFECYCLE_START_CHECK: "model-lifecycle:start-check",
+  MODEL_LIFECYCLE_RETRY: "model-lifecycle:retry",
+  MODEL_LIFECYCLE_CHANGE_PATH: "model-lifecycle:change-path",
+  MODEL_LIFECYCLE_COPY_REPORT: "model-lifecycle:copy-report",
+  MODEL_LIFECYCLE_CONFIRM_DOWNLOAD: "model-lifecycle:confirm-download",
   RUNTIME_TRUST_GET: "runtime:trust:get",
   RUNTIME_TRUST_RETRY: "runtime:trust:retry",
   RUNTIME_TRUST_COPY_REPORT: "runtime:trust:copy-report"
