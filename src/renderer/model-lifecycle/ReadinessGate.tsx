@@ -158,6 +158,9 @@ export function ReadinessGate({
           snapshot={snapshot}
           installPath={activePath}
           onChangePath={(nextPath) => applyPathChange(nextPath)}
+          onCopyDiagnostics={() => {
+            copyReadinessReport();
+          }}
           onConfirm={() => {
             void modelLifecycleBridge.confirmDownload().then((next) => {
               setSnapshot(next);

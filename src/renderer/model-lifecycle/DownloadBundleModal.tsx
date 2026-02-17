@@ -6,6 +6,7 @@ type DownloadBundleModalProps = {
   installPath: string;
   onConfirm: () => void;
   onChangePath: (nextPath: string) => Promise<void> | void;
+  onCopyDiagnostics?: () => void;
   initialPathEditing?: boolean;
 };
 
@@ -14,6 +15,7 @@ export function DownloadBundleModal({
   installPath,
   onConfirm,
   onChangePath,
+  onCopyDiagnostics,
   initialPathEditing = false
 }: DownloadBundleModalProps): ReactElement | null {
   const shouldRender = shouldShowDownloadDialog(snapshot);
@@ -52,11 +54,20 @@ export function DownloadBundleModal({
     }
   };
 
-  const displayNameByArtifactId = new Map(
-    snapshot.artifacts.map((artifact) => [artifact.artifactId, artifact.displayName])
-  );
   const pendingArtifacts = snapshot.artifacts.filter((artifact) => !artifact.isAvailable);
-  const startedDownloads = snapshot.downloadProgress.filter((line) => line.status !== "pending");
+  const progressByArtifactId = new Map(snapshot.downloadProgress.map((line) => [line.artifactId, line]));
+  const bundleRows = snapshot.artifacts.map((artifact) => {
+    const progress = progressByArtifactId.get(artifact.artifactId);
+    const statusLabel = getBundleStatusLabel(artifact.isAvailable, progress?.status);
+    const isActiveDownload = progress?.status === "downloading";
+
+    return {
+      artifactId: artifact.artifactId,
+      displayName: artifact.displayName,
+      statusLabel,
+      progressPercent: isActiveDownload ? Math.round(progress.percent) : null
+    };
+  });
 
   return (
     <section
@@ -146,26 +157,21 @@ export function DownloadBundleModal({
             ))}
           </ul>
         </>
-      ) : (
-        <ul style={{ margin: "0.35rem 0", paddingInlineStart: "1.1rem" }}>
-          {startedDownloads.map((line) => {
-            const displayName = displayNameByArtifactId.get(line.artifactId) ?? line.label;
-            if (line.status === "downloading") {
-              return (
-                <li key={line.artifactId}>
-                  {displayName} - {Math.round(line.percent)}% (downloading)
-                </li>
-              );
-            }
-
-            return (
-              <li key={line.artifactId}>
-                {displayName} - {line.status}
-              </li>
-            );
-          })}
-        </ul>
-      )}
+       ) : (
+         <>
+           <p style={{ margin: "0.35rem 0", fontSize: "0.9rem" }}>
+             Bundle status (all required artifacts):
+           </p>
+           <ul style={{ margin: "0.35rem 0", paddingInlineStart: "1.1rem" }}>
+             {bundleRows.map((row) => (
+               <li key={row.artifactId}>
+                 {row.displayName} - {row.statusLabel}
+                 {row.progressPercent !== null ? ` (${row.progressPercent}%)` : ""}
+               </li>
+             ))}
+           </ul>
+         </>
+       )}
 
       {snapshot.downloadConfirmation.required ? (
         <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
@@ -175,12 +181,50 @@ export function DownloadBundleModal({
           </span>
         </div>
       ) : (
-        <p style={{ margin: "0.35rem 0", fontSize: "0.9rem" }}>
-          Download progress is observe-only during startup.
-        </p>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <p style={{ margin: "0.35rem 0", fontSize: "0.9rem" }}>
+            Download progress is observe-only during startup.
+          </p>
+          {onCopyDiagnostics ? (
+            <button type="button" onClick={onCopyDiagnostics}>
+              Show/Copy diagnostics report
+            </button>
+          ) : null}
+        </div>
       )}
     </section>
   );
+}
+
+function getBundleStatusLabel(
+  isAvailable: boolean,
+  progressStatus: ModelLifecycleSnapshot["downloadProgress"][number]["status"] | undefined
+): string {
+  if (progressStatus === "downloading") {
+    return "downloading";
+  }
+
+  if (progressStatus === "verifying") {
+    return "verifying";
+  }
+
+  if (progressStatus === "failed") {
+    return "failed";
+  }
+
+  if (progressStatus === "complete") {
+    return "verified";
+  }
+
+  if (isAvailable) {
+    return "present";
+  }
+
+  if (progressStatus === "pending") {
+    return "pending";
+  }
+
+  return "missing";
 }
 
 export function shouldShowDownloadDialog(snapshot: ModelLifecycleSnapshot): boolean {

@@ -48,7 +48,7 @@ describe("DownloadBundleModal", () => {
     expect(html).toContain("Confirm bundle download");
   });
 
-  it("shows percent only while artifact is actively downloading", () => {
+  it("renders full bundle status for all artifacts and percent only for active download", () => {
     const html = renderToStaticMarkup(
       <DownloadBundleModal
         snapshot={createSnapshot({
@@ -73,6 +73,14 @@ describe("DownloadBundleModal", () => {
               bytesDownloaded: 100,
               bytesTotal: 100,
               status: "complete"
+            },
+            {
+              artifactId: "tts",
+              label: "Voice model",
+              percent: 0,
+              bytesDownloaded: 0,
+              bytesTotal: 100,
+              status: "pending"
             }
           ],
           artifacts: [
@@ -87,6 +95,13 @@ describe("DownloadBundleModal", () => {
               capability: "llm",
               artifactId: "llm",
               displayName: "Assistant",
+              isAvailable: true,
+              issue: "missing-file"
+            },
+            {
+              capability: "tts",
+              artifactId: "tts",
+              displayName: "Voice",
               isAvailable: false,
               issue: "missing-file"
             }
@@ -98,9 +113,42 @@ describe("DownloadBundleModal", () => {
       />
     );
 
-    expect(html).toContain("Speech - 14% (downloading)");
-    expect(html).toContain("Assistant - complete");
-    expect(html).not.toContain("Assistant - 100%");
+    expect(html).toContain("Bundle status (all required artifacts):");
+    expect(html).toContain("Speech - downloading (14%)");
+    expect(html).toContain("Assistant - verified");
+    expect(html).toContain("Voice - pending");
+    expect(html).not.toContain("Assistant - verified (100%)");
+  });
+
+  it("keeps storage and diagnostics controls visible while gate blocks app shell", () => {
+    const html = renderToStaticMarkup(
+      <DownloadBundleModal
+        snapshot={createSnapshot({
+          state: "downloading",
+          downloadConfirmation: {
+            required: false,
+            confirmedAtMs: 1
+          },
+          artifacts: [
+            {
+              capability: "stt",
+              artifactId: "stt",
+              displayName: "Speech",
+              isAvailable: false,
+              issue: "missing-file"
+            }
+          ]
+        })}
+        installPath="C:/models"
+        onConfirm={vi.fn()}
+        onChangePath={vi.fn()}
+        onCopyDiagnostics={vi.fn()}
+      />
+    );
+
+    expect(html).toContain("Downloading AI model bundle");
+    expect(html).toContain("Edit download location");
+    expect(html).toContain("Show/Copy diagnostics report");
   });
 
   it("shows inline location editor when editing is active", () => {
