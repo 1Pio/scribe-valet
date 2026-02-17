@@ -9,14 +9,14 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 
 ## Current Position
 
-**Current Phase:** 1
-**Current Phase Name:** Runtime Guardrails and IPC Backbone
+**Current Phase:** 2
+**Current Phase Name:** Model and Storage Lifecycle
 **Total Phases:** 8
-**Current Plan:** 8
-**Total Plans in Phase:** 8
-**Status:** Phase complete — ready for verification
+**Current Plan:** 2
+**Total Plans in Phase:** 5
+**Status:** In progress
 **Last Activity:** 2026-02-17
-**Last Activity Description:** Approved Phase 1 human verification after 01-08 renderer crash continuity closure
+**Last Activity Description:** Completed 02-01 storage topology and override persistence plan
 
 **Progress:** [███████░░░] 69%
 
