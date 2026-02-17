@@ -1,11 +1,15 @@
 import path from "node:path";
 import { mkdir, writeFile } from "node:fs/promises";
 import { app, BrowserWindow, clipboard, ipcMain } from "electron";
+import { registerModelLifecycleController } from "./ipc/model-lifecycle-controller";
 import {
   registerRuntimeController,
   type RuntimeRestartAppResult
 } from "./ipc/runtime-controller";
 import { registerRuntimeTrustController } from "./ipc/runtime-trust-controller";
+import { JsonDownloadResumeStore } from "./model-lifecycle/download-resume-store";
+import { ModelLifecycleService } from "./model-lifecycle/model-lifecycle-service";
+import { createPathOverrideStore } from "./storage/path-override-store";
 import { WorkerSupervisor } from "./supervisor/worker-supervisor";
 import { installRendererRecovery } from "./window/renderer-recovery";
 import {
@@ -71,6 +75,16 @@ async function bootstrap(): Promise<void> {
     }
   });
 
+  const pathOverrideStore = createPathOverrideStore();
+  const resumeStore = new JsonDownloadResumeStore(
+    path.join(app.getPath("userData"), "model-download-resume-state.json")
+  );
+  const modelLifecycleService = new ModelLifecycleService({
+    resumeStore,
+    loadStoragePaths: () => pathOverrideStore.loadResolvedPaths(),
+    saveStorageOverride: (override) => pathOverrideStore.saveOverride(override)
+  });
+
   const supervisor = new WorkerSupervisor();
   supervisor.start();
 
@@ -109,10 +123,21 @@ async function bootstrap(): Promise<void> {
       }
     }
   });
+  const disposeModelLifecycleController = registerModelLifecycleController({
+    ipcMain,
+    service: modelLifecycleService,
+    target: mainWindow.webContents
+  });
+
+  void modelLifecycleService.startCheck().catch((error) => {
+    const message = error instanceof Error ? error.message : "Unknown model lifecycle error";
+    console.error(`[model-lifecycle] startup check failed: ${message}`);
+  });
 
   mainWindow.on("closed", () => {
     disposeRendererRecovery();
     disposeRuntimeController();
+    disposeModelLifecycleController();
     supervisor.stop();
   });
 

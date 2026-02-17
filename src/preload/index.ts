@@ -9,6 +9,10 @@ import {
   type RuntimeTrustBridge
 } from "./runtime-trust-bridge";
 import {
+  createModelLifecycleBridge,
+  type ModelLifecycleBridge
+} from "./model-lifecycle-bridge";
+import {
   createRuntimeStatusBridge,
   type RuntimeStatusBridge
 } from "./runtime-status-bridge";
@@ -18,6 +22,7 @@ export type RuntimeBridge = {
   handshake: () => Promise<HandshakeResponseEnvelope>;
   runtimeStatus: RuntimeStatusBridge;
   runtimeTrust: RuntimeTrustBridge;
+  modelLifecycle: ModelLifecycleBridge;
 };
 
 const runtimeBridge: RuntimeBridge = Object.freeze({
@@ -35,7 +40,8 @@ const runtimeBridge: RuntimeBridge = Object.freeze({
       )
   ),
   runtimeStatus: createRuntimeStatusBridge(),
-  runtimeTrust: createRuntimeTrustBridge()
+  runtimeTrust: createRuntimeTrustBridge(),
+  modelLifecycle: createModelLifecycleBridge()
 });
 
 contextBridge.exposeInMainWorld("scribeValet", runtimeBridge);
