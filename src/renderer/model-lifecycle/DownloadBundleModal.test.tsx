@@ -34,14 +34,38 @@ describe("DownloadBundleModal", () => {
         })}
         installPath="C:/models"
         onConfirm={vi.fn()}
+        onChangePath={vi.fn()}
       />
     );
 
     expect(html).toContain("Download required AI model bundle");
     expect(html).toContain("Location:");
     expect(html).toContain("C:/models");
+    expect(html).toContain("Edit download location");
     expect(html).toContain("Speech - 14% (downloading)");
     expect(html).toContain("Confirm bundle download");
+  });
+
+  it("shows inline location editor when editing is active", () => {
+    const html = renderToStaticMarkup(
+      <DownloadBundleModal
+        snapshot={createSnapshot({
+          downloadConfirmation: {
+            required: true,
+            confirmedAtMs: null
+          }
+        })}
+        installPath="C:/models"
+        onConfirm={vi.fn()}
+        onChangePath={vi.fn()}
+        initialPathEditing={true}
+      />
+    );
+
+    expect(html).toContain("Model location");
+    expect(html).toContain("download-modal-path-input");
+    expect(html).toContain("Apply location");
+    expect(html).toContain("Missing directories are created automatically");
   });
 
   it("tracks whether download dialog should be shown", () => {

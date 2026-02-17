@@ -157,6 +157,7 @@ export function ReadinessGate({
         <DownloadBundleModal
           snapshot={snapshot}
           installPath={activePath}
+          onChangePath={(nextPath) => applyPathChange(nextPath)}
           onConfirm={() => {
             void modelLifecycleBridge.confirmDownload().then((next) => {
               setSnapshot(next);
