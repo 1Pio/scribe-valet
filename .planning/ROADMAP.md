@@ -51,12 +51,13 @@ Plans:
   1. At startup, user sees whether required model files are present in the configured model directory.
   2. Missing model artifacts download once, pass integrity verification, and become usable without manual file copying.
   3. Models, config, tools, and logs are stored in clearly separated directories with OS defaults and user override support.
-**Plans**: 4 plans
+**Plans**: 5 plans
 
 Plans:
 - [ ] 02-01-PLAN.md - Establish storage topology, defaults, and hybrid override persistence.
 - [ ] 02-02-PLAN.md - Build resumable stage-verify-promote artifact installer for required model bundle.
-- [ ] 02-03-PLAN.md - Wire main-owned model lifecycle orchestration through IPC and preload bridge.
+- [ ] 02-03-PLAN.md - Implement main-process lifecycle orchestration core and shared contracts.
+- [ ] 02-05-PLAN.md - Wire lifecycle IPC/preload/bootstrap boundaries for renderer-safe access.
 - [ ] 02-04-PLAN.md - Deliver readiness/download/storage UI with manual startup-flow verification.
 
 ### Phase 3: Device Selection and Fallback Behavior
