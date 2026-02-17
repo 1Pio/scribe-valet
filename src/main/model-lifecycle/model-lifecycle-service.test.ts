@@ -146,8 +146,52 @@ describe("ModelLifecycleService", () => {
     ]);
     expect(snapshot.downloadConfirmation.required).toBe(false);
     expect(snapshot.diagnostics.lines[0]).toContain("Model root:");
+    expect(snapshot.diagnostics.lines).toContain("Source URL: https://example.test/stt.bin");
+    expect(snapshot.diagnostics.lines.some((line) => line.startsWith("Action:"))).toBe(true);
     expect(snapshot.diagnostics.lines).toContain("Attempts: 5");
     expect(installAttemptCounter).toHaveBeenCalledTimes(5);
+  });
+
+  it("emits downloading state with progress only after confirmation", async () => {
+    const installedFiles = new Set<string>();
+    const snapshots: string[] = [];
+
+    const service = new ModelLifecycleService({
+      resumeStore: NOOP_RESUME_STORE,
+      loadStoragePaths: async () => BASE_PATHS,
+      artifacts: TEST_ARTIFACTS,
+      statImpl: async (filePath) => {
+        if (installedFiles.has(path.basename(filePath))) {
+          return {};
+        }
+
+        const error = new Error("missing") as Error & { code: string };
+        error.code = "ENOENT";
+        throw error;
+      },
+      installArtifactImpl: async ({ artifact }) => {
+        installedFiles.add(artifact.fileName);
+        return {
+          artifactId: artifact.id,
+          filePath: path.join(BASE_PATHS.active.models, artifact.fileName),
+          resumedFromBytes: 0,
+          restartedFromScratch: false,
+          sha256: artifact.expectedSha256
+        };
+      }
+    });
+
+    service.onSnapshot((snapshot) => {
+      snapshots.push(snapshot.state);
+    });
+
+    const beforeConfirm = await service.startCheck();
+    expect(beforeConfirm.downloadConfirmation.required).toBe(true);
+    expect(beforeConfirm.downloadProgress.every((line) => line.status === "pending")).toBe(true);
+
+    const afterConfirm = await service.confirmDownload();
+    expect(afterConfirm.state).toBe("ready");
+    expect(snapshots).toContain("downloading");
   });
 
   it("keeps baseline retries for checksum mismatch without expansion", async () => {

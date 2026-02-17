@@ -55,6 +55,8 @@ export function DownloadBundleModal({
   const displayNameByArtifactId = new Map(
     snapshot.artifacts.map((artifact) => [artifact.artifactId, artifact.displayName])
   );
+  const pendingArtifacts = snapshot.artifacts.filter((artifact) => !artifact.isAvailable);
+  const startedDownloads = snapshot.downloadProgress.filter((line) => line.status !== "pending");
 
   return (
     <section
@@ -133,16 +135,37 @@ export function DownloadBundleModal({
         </p>
       ) : null}
 
-      <ul style={{ margin: "0.35rem 0", paddingInlineStart: "1.1rem" }}>
-        {snapshot.downloadProgress.map((line) => {
-          const displayName = displayNameByArtifactId.get(line.artifactId) ?? line.label;
-          return (
-            <li key={line.artifactId}>
-              {displayName} - {Math.round(line.percent)}% ({line.status})
-            </li>
-          );
-        })}
-      </ul>
+      {snapshot.downloadConfirmation.required ? (
+        <>
+          <p style={{ margin: "0.35rem 0", fontSize: "0.9rem" }}>
+            Missing required artifacts will download after you confirm this one-time bundle action:
+          </p>
+          <ul style={{ margin: "0.35rem 0", paddingInlineStart: "1.1rem" }}>
+            {pendingArtifacts.map((artifact) => (
+              <li key={artifact.artifactId}>{artifact.displayName}</li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <ul style={{ margin: "0.35rem 0", paddingInlineStart: "1.1rem" }}>
+          {startedDownloads.map((line) => {
+            const displayName = displayNameByArtifactId.get(line.artifactId) ?? line.label;
+            if (line.status === "downloading") {
+              return (
+                <li key={line.artifactId}>
+                  {displayName} - {Math.round(line.percent)}% (downloading)
+                </li>
+              );
+            }
+
+            return (
+              <li key={line.artifactId}>
+                {displayName} - {line.status}
+              </li>
+            );
+          })}
+        </ul>
+      )}
 
       {snapshot.downloadConfirmation.required ? (
         <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>

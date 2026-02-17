@@ -1,3 +1,4 @@
+import path from "node:path";
 import { IPC_CHANNELS } from "../../shared/protocol/ipc-envelope";
 import type { ModelLifecycleSnapshot } from "../../shared/types/model-lifecycle";
 
@@ -111,5 +112,10 @@ function parseCustomRoot(input: unknown): string {
     throw new Error("change-path requires a non-empty customRoot.");
   }
 
-  return trimmed;
+  const normalized = path.normalize(trimmed).replace(/[\\/]+$/, "");
+  if (path.basename(normalized).toLowerCase() === "models") {
+    return path.dirname(normalized);
+  }
+
+  return normalized;
 }

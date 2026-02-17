@@ -4,7 +4,7 @@ import type { ModelLifecycleSnapshot } from "../../shared/types/model-lifecycle"
 import { DownloadBundleModal, shouldShowDownloadDialog } from "./DownloadBundleModal";
 
 describe("DownloadBundleModal", () => {
-  it("renders one-time bundle confirmation with explicit percent lines", () => {
+  it("renders one-time bundle confirmation with pending artifact list", () => {
     const html = renderToStaticMarkup(
       <DownloadBundleModal
         snapshot={createSnapshot({
@@ -42,8 +42,65 @@ describe("DownloadBundleModal", () => {
     expect(html).toContain("Location:");
     expect(html).toContain("C:/models");
     expect(html).toContain("Edit download location");
-    expect(html).toContain("Speech - 14% (downloading)");
+    expect(html).toContain("Missing required artifacts will download after you confirm");
+    expect(html).toContain("Speech");
+    expect(html).not.toContain("14% (downloading)");
     expect(html).toContain("Confirm bundle download");
+  });
+
+  it("shows percent only while artifact is actively downloading", () => {
+    const html = renderToStaticMarkup(
+      <DownloadBundleModal
+        snapshot={createSnapshot({
+          state: "downloading",
+          downloadConfirmation: {
+            required: false,
+            confirmedAtMs: 1
+          },
+          downloadProgress: [
+            {
+              artifactId: "stt",
+              label: "Speech model",
+              percent: 14,
+              bytesDownloaded: 14,
+              bytesTotal: 100,
+              status: "downloading"
+            },
+            {
+              artifactId: "llm",
+              label: "Assistant model",
+              percent: 100,
+              bytesDownloaded: 100,
+              bytesTotal: 100,
+              status: "complete"
+            }
+          ],
+          artifacts: [
+            {
+              capability: "stt",
+              artifactId: "stt",
+              displayName: "Speech",
+              isAvailable: false,
+              issue: "missing-file"
+            },
+            {
+              capability: "llm",
+              artifactId: "llm",
+              displayName: "Assistant",
+              isAvailable: false,
+              issue: "missing-file"
+            }
+          ]
+        })}
+        installPath="C:/models"
+        onConfirm={vi.fn()}
+        onChangePath={vi.fn()}
+      />
+    );
+
+    expect(html).toContain("Speech - 14% (downloading)");
+    expect(html).toContain("Assistant - complete");
+    expect(html).not.toContain("Assistant - 100%");
   });
 
   it("shows inline location editor when editing is active", () => {

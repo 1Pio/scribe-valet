@@ -50,7 +50,9 @@ describe("model lifecycle controller", () => {
     expect(await handlers.get(MODEL_LIFECYCLE_CONTROLLER_CHANNELS.START_CHECK)?.({})).toEqual(snapshot);
     expect(await handlers.get(MODEL_LIFECYCLE_CONTROLLER_CHANNELS.RETRY)?.({})).toEqual(snapshot);
     expect(
-      await handlers.get(MODEL_LIFECYCLE_CONTROLLER_CHANNELS.CHANGE_PATH)?.({}, { customRoot: " /models " })
+      await handlers
+        .get(MODEL_LIFECYCLE_CONTROLLER_CHANNELS.CHANGE_PATH)
+        ?.({}, { customRoot: " /workspace/scribe/models " })
     ).toEqual(snapshot);
     expect(await handlers.get(MODEL_LIFECYCLE_CONTROLLER_CHANNELS.COPY_REPORT)?.({})).toEqual({
       ok: true,
@@ -63,9 +65,32 @@ describe("model lifecycle controller", () => {
     expect(service.getSnapshot).toHaveBeenCalledTimes(1);
     expect(service.startCheck).toHaveBeenCalledTimes(1);
     expect(service.retry).toHaveBeenCalledTimes(1);
-    expect(service.changePath).toHaveBeenCalledWith("/models");
+    expect(service.changePath).toHaveBeenCalledWith(expect.stringMatching(/[\\/]workspace[\\/]scribe$/));
     expect(service.copyDiagnostics).toHaveBeenCalledTimes(1);
     expect(service.confirmDownload).toHaveBeenCalledTimes(1);
+  });
+
+  it("accepts an existing custom root path without mutating it", async () => {
+    const handlers = new Map<string, (_event: unknown, ...args: unknown[]) => unknown>();
+    const service = createServiceStub();
+
+    registerModelLifecycleController({
+      ipcMain: {
+        handle: (channel, handler) => {
+          handlers.set(channel, handler);
+        }
+      },
+      service,
+      target: {
+        send: vi.fn()
+      }
+    });
+
+    await handlers
+      .get(MODEL_LIFECYCLE_CONTROLLER_CHANNELS.CHANGE_PATH)
+      ?.({}, { customRoot: " C:\\workspace\\scribe " });
+
+    expect(service.changePath).toHaveBeenCalledWith("C:\\workspace\\scribe");
   });
 
   it("broadcasts snapshot updates to renderer subscribers", () => {

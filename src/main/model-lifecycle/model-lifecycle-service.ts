@@ -63,6 +63,7 @@ export type ModelLifecycleServiceOptions = {
 
 type FailureDiagnostics = {
   artifactId: string;
+  sourceUrl: string;
   reason: SetupScreenReason;
   message: string;
   code: string;
@@ -195,7 +196,29 @@ export class ModelLifecycleService extends EventEmitter {
       return this.snapshot;
     }
 
-    const installResult = await this.installMissingArtifacts(modelRoot, missing.map((item) => item.artifactId));
+    const missingArtifactIds = missing.map((item) => item.artifactId);
+    this.publish(
+      this.createSnapshot("downloading", {
+        setupReason: null,
+        diagnosticsSummary: "Downloading missing model artifacts.",
+        diagnosticsLines: [
+          `Model root: ${modelRoot}`,
+          ...missing.map((item) => `Queued: ${item.displayName}`)
+        ],
+        modeAvailability: buildModeAvailability(health),
+        artifacts: health,
+        recoveryActions: createRecoveryActions(),
+        requireDownloadConfirmation: false,
+        downloadProgress: createDownloadProgress(this.artifacts, new Set(missingArtifactIds)),
+        stepOverride: {
+          inspect: "warning",
+          install: "running",
+          finalize: "warning"
+        }
+      })
+    );
+
+    const installResult = await this.installMissingArtifacts(modelRoot, missingArtifactIds);
     if (!installResult.ok) {
       this.clearBannerTimer();
       const nextHealth = await this.readArtifactHealth(modelRoot);
@@ -206,8 +229,10 @@ export class ModelLifecycleService extends EventEmitter {
           diagnosticsLines: [
             `Model root: ${modelRoot}`,
             `Artifact: ${installResult.failure.artifactId}`,
+            `Source URL: ${installResult.failure.sourceUrl}`,
             `Code: ${installResult.failure.code}`,
             `Hint: ${installResult.failure.hint}`,
+            `Action: ${getFailureAction(installResult.failure.hint)}`,
             `Attempts: ${installResult.failure.attempts}`
           ],
           modeAvailability: buildModeAvailability(nextHealth),
@@ -373,10 +398,19 @@ export class ModelLifecycleService extends EventEmitter {
     missingArtifactIds: string[]
   ): Promise<{ ok: true } | { ok: false; failure: FailureDiagnostics }> {
     const missingSet = new Set(missingArtifactIds);
+    const progress = createDownloadProgress(this.artifacts, missingSet);
     for (const artifact of this.artifacts) {
       if (!missingSet.has(artifact.id)) {
         continue;
       }
+
+      updateDownloadProgress(progress, artifact.id, "downloading", 0);
+      this.publish({
+        ...this.snapshot,
+        state: "downloading",
+        updatedAtMs: this.now(),
+        downloadProgress: progress.map((line) => ({ ...line }))
+      });
 
       let maxAttempts = 3;
       let attempt = 0;
@@ -393,13 +427,28 @@ export class ModelLifecycleService extends EventEmitter {
             installDir: modelRoot,
             resumeStore: this.resumeStore
           });
+          updateDownloadProgress(progress, artifact.id, "complete", 100);
+          this.publish({
+            ...this.snapshot,
+            state: "downloading",
+            updatedAtMs: this.now(),
+            downloadProgress: progress.map((line) => ({ ...line }))
+          });
           break;
         } catch (error) {
           if (!(error instanceof ArtifactInstallError)) {
+            updateDownloadProgress(progress, artifact.id, "failed", 0);
+            this.publish({
+              ...this.snapshot,
+              state: "downloading",
+              updatedAtMs: this.now(),
+              downloadProgress: progress.map((line) => ({ ...line }))
+            });
             return {
               ok: false,
               failure: {
                 artifactId: artifact.id,
+                sourceUrl: artifact.downloadUrl,
                 reason: "download-failure",
                 message: asErrorMessage(error),
                 code: "unknown",
@@ -416,13 +465,22 @@ export class ModelLifecycleService extends EventEmitter {
 
           const hasMoreAttempts = attempt < maxAttempts;
           if (hasMoreAttempts) {
+            updateDownloadProgress(progress, artifact.id, "downloading", 0);
             continue;
           }
 
+          updateDownloadProgress(progress, artifact.id, "failed", 0);
+          this.publish({
+            ...this.snapshot,
+            state: "downloading",
+            updatedAtMs: this.now(),
+            downloadProgress: progress.map((line) => ({ ...line }))
+          });
           return {
             ok: false,
             failure: {
               artifactId: artifact.id,
+              sourceUrl: artifact.downloadUrl,
               reason:
                 error.diagnostics.code === "integrity-mismatch"
                   ? "verification-failure"
@@ -448,6 +506,7 @@ export class ModelLifecycleService extends EventEmitter {
       diagnosticsLines: string[];
       modeAvailability: LifecycleModeAvailabilityMap;
       artifacts: ModelLifecycleSnapshot["artifacts"];
+      downloadProgress?: ModelLifecycleSnapshot["downloadProgress"];
       recoveryActions?: LifecycleRecoveryAction[];
       banner?: BannerEscalation;
       requireDownloadConfirmation?: boolean;
@@ -506,14 +565,16 @@ export class ModelLifecycleService extends EventEmitter {
         required: input.requireDownloadConfirmation ?? false,
         confirmedAtMs: this.downloadConfirmed ? this.now() : null
       },
-      downloadProgress: this.artifacts.map((artifact) => ({
-        artifactId: artifact.id,
-        label: artifact.progressLabel,
-        percent: 0,
-        bytesDownloaded: 0,
-        bytesTotal: artifact.expectedBytes,
-        status: "pending"
-      })),
+      downloadProgress:
+        input.downloadProgress ??
+        this.artifacts.map((artifact) => ({
+          artifactId: artifact.id,
+          label: artifact.progressLabel,
+          percent: 0,
+          bytesDownloaded: 0,
+          bytesTotal: artifact.expectedBytes,
+          status: "pending"
+        })),
       artifacts: input.artifacts,
       recoveryActions: input.recoveryActions ?? [],
       diagnostics: {
@@ -545,6 +606,59 @@ function isTransientInstallFailure(error: ArtifactInstallError): boolean {
     error.diagnostics.hint === "retryable-network" ||
     error.diagnostics.hint === "retryable-server"
   );
+}
+
+function createDownloadProgress(
+  artifacts: ReadonlyArray<RequiredModelArtifact>,
+  missingSet: Set<string>
+): ModelLifecycleSnapshot["downloadProgress"] {
+  return artifacts.map((artifact) => {
+    const isMissing = missingSet.has(artifact.id);
+    return {
+      artifactId: artifact.id,
+      label: artifact.progressLabel,
+      percent: isMissing ? 0 : 100,
+      bytesDownloaded: isMissing ? 0 : artifact.expectedBytes,
+      bytesTotal: artifact.expectedBytes,
+      status: isMissing ? "pending" : "complete"
+    };
+  });
+}
+
+function updateDownloadProgress(
+  progress: ModelLifecycleSnapshot["downloadProgress"],
+  artifactId: string,
+  status: ModelLifecycleSnapshot["downloadProgress"][number]["status"],
+  percent: number
+): void {
+  const line = progress.find((entry) => entry.artifactId === artifactId);
+  if (!line) {
+    return;
+  }
+
+  line.status = status;
+  line.percent = percent;
+  line.bytesDownloaded = Math.round((line.bytesTotal * percent) / 100);
+}
+
+function getFailureAction(hint: string): string {
+  if (hint === "retryable-network") {
+    return "Check internet connection or firewall, then retry.";
+  }
+
+  if (hint === "retryable-server") {
+    return "Artifact host returned server errors. Retry shortly or switch network.";
+  }
+
+  if (hint === "manual-check-url") {
+    return "Artifact source may be unavailable. Verify URL access and manifest metadata.";
+  }
+
+  if (hint === "clear-partial-and-retry") {
+    return "Partial file failed integrity check. Retry to re-download from scratch.";
+  }
+
+  return "Verify directory permissions and available disk space, then retry.";
 }
 
 function isBlockingSetupReason(artifacts: ModelLifecycleSnapshot["artifacts"]): boolean {

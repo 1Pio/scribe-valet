@@ -26,9 +26,9 @@ const REQUIRED_ARTIFACTS: readonly RequiredModelArtifact[] = [
     fileName: "ggml-base.en-q5_1.bin",
     downloadUrl:
       "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en-q5_1.bin",
-    expectedBytes: 620_075_328,
+    expectedBytes: 59_721_011,
     checksumSha256:
-      "08b0e143c1841eeb5f6b5379f624ecf8ef8a7f4631efdb413725bc5ef164481e"
+      "323473b7c41bfb7fb994c1e9526abdcc7c55d3a909c8fa0c29f753005e87d372"
   },
   {
     id: "llm-qwen2.5-3b-instruct-q4_k_m",
@@ -38,9 +38,9 @@ const REQUIRED_ARTIFACTS: readonly RequiredModelArtifact[] = [
     fileName: "qwen2.5-3b-instruct-q4_k_m.gguf",
     downloadUrl:
       "https://huggingface.co/bartowski/Qwen2.5-3B-Instruct-GGUF/resolve/main/Qwen2.5-3B-Instruct-Q4_K_M.gguf",
-    expectedBytes: 1_995_479_040,
+    expectedBytes: 1_929_903_264,
     checksumSha256:
-      "e06ffd648c7b0476f3a9f8a6f9f997f3afec45dd03f65fdc5a14566f70c188f4"
+      "7f4e1a6aed07702952a1dd402b9d23382d8083c34c8095e8751d2c5f40b116b3"
   },
   {
     id: "tts-kokoro-v0_19-fp16",
@@ -48,11 +48,10 @@ const REQUIRED_ARTIFACTS: readonly RequiredModelArtifact[] = [
     displayName: "Voice Output (Kokoro v0.19)",
     progressLabel: "Text to speech model",
     fileName: "kokoro-v0_19.onnx",
-    downloadUrl:
-      "https://huggingface.co/hexgrad/Kokoro-82M/resolve/main/kokoro-v0_19.onnx",
-    expectedBytes: 327_810_048,
+    downloadUrl: "https://huggingface.co/onnx-community/Kokoro-82M-ONNX/resolve/main/onnx/model_fp16.onnx",
+    expectedBytes: 163_227_585,
     checksumSha256:
-      "f4f95a656f7ec5592d2788f63edd8f7d110f18ff5095ee3ecef0d83f2f8ca170"
+      "179746a6ff0aca35bd19801ce91e820205c15a9f3135cc8831cd90c04c08741e"
   }
 ];
 

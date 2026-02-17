@@ -108,8 +108,16 @@ function RendererRoot(): ReactElement {
             <p>Runtime bridge status: {bridgeConnected ? "connected" : "unavailable"}</p>
           </section>
         ) : (
-          <section aria-label="Settings">
-            <h2>Settings</h2>
+          <section
+            aria-label="Settings"
+            style={{ display: "grid", gap: "0.75rem", marginTop: "0.5rem" }}
+          >
+            <header>
+              <h2 style={{ margin: 0 }}>Settings</h2>
+              <p style={{ margin: "0.35rem 0 0", color: "#334154" }}>
+                Manage local model storage and privacy controls.
+              </p>
+            </header>
             <StoragePathSettings
               activePath={activeModelPath}
               expectedPathHint={activeModelPath}
@@ -119,7 +127,13 @@ function RendererRoot(): ReactElement {
                 });
               }}
             />
-            <PrivacySettingsPage runtimeTrustBridge={window.scribeValet.runtimeTrust} />
+            <section
+              aria-label="Privacy settings"
+              style={{ border: "1px solid #d9d9d9", borderRadius: "0.75rem", padding: "0.75rem" }}
+            >
+              <h3 style={{ marginTop: 0 }}>Privacy</h3>
+              <PrivacySettingsPage runtimeTrustBridge={window.scribeValet.runtimeTrust} />
+            </section>
           </section>
         )}
       </main>

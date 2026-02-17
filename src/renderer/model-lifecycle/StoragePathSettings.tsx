@@ -49,7 +49,7 @@ export function StoragePathSettings({
         marginBottom: "0.75rem"
       }}
     >
-      <h3 style={{ margin: 0 }}>Model storage path</h3>
+      <h3 style={{ margin: 0 }}>Model storage location</h3>
       <p style={{ margin: "0.4rem 0" }}>
         Active path: <code>{activePath}</code>
       </p>
@@ -67,7 +67,7 @@ export function StoragePathSettings({
             setStatusMessage("");
           }}
         >
-          Change path directory
+          Change model location
         </button>
       ) : null}
 
@@ -88,7 +88,7 @@ export function StoragePathSettings({
 
           <div style={{ display: "flex", gap: "0.45rem" }}>
             <button type="submit" disabled={isSaving}>
-              {isSaving ? "Applying..." : "Apply path"}
+              {isSaving ? "Applying..." : "Apply location"}
             </button>
             <button
               type="button"

@@ -15,7 +15,7 @@ describe("StoragePathSettings", () => {
     expect(html).toContain("Active path:");
     expect(html).toContain("C:/Users/A/models");
     expect(html).toContain("Expected models path:");
-    expect(html).toContain("Change path directory");
+    expect(html).toContain("Change model location");
     expect(html).not.toContain("Missing directories are created automatically");
   });
 
@@ -31,6 +31,6 @@ describe("StoragePathSettings", () => {
     expect(html).toContain("Directory");
     expect(html).toContain("value=\"C:/Users/A/models\"");
     expect(html).toContain("Missing directories are created automatically");
-    expect(html).toContain("Apply path");
+    expect(html).toContain("Apply location");
   });
 });
