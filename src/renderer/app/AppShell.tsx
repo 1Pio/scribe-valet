@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactElement } from "react";
 import { createIdleRuntimeStatus, type RuntimeStatus } from "../../shared/types/runtime-status";
 import type { ModelLifecycleBridge } from "../../preload/model-lifecycle-bridge";
-import { ReadinessGate } from "../model-lifecycle/ReadinessGate";
+import { ReadinessGate, type ReadinessDialogState } from "../model-lifecycle/ReadinessGate";
 import { MismatchRecoveryPanel } from "../runtime-status/MismatchRecoveryPanel";
 import { RuntimeRecoveryBanner } from "../runtime-status/RuntimeRecoveryBanner";
 
@@ -35,6 +35,7 @@ export function AppShell({
   const [runtimeStatus, setRuntimeStatus] = useState<RuntimeStatus>(
     createIdleRuntimeStatus()
   );
+  const [readinessDialogState, setReadinessDialogState] = useState<ReadinessDialogState>("none");
 
   useEffect(() => {
     let disposed = false;
@@ -66,34 +67,47 @@ export function AppShell({
     });
   };
 
+  const showRuntimeRecovery = readinessDialogState === "none";
+
   return (
     <>
-      <MismatchRecoveryPanel
-        runtimeStatus={runtimeStatus}
-        onFixNow={() => {
-          runStatusAction(() => runtimeStatusBridge.fixNow());
+      {showRuntimeRecovery ? (
+        <MismatchRecoveryPanel
+          runtimeStatus={runtimeStatus}
+          onFixNow={() => {
+            runStatusAction(() => runtimeStatusBridge.fixNow());
+          }}
+          onTryAgain={() => {
+            runStatusAction(() => runtimeStatusBridge.tryAgain());
+          }}
+          onRestartApp={() => {
+            void runtimeStatusBridge.restartApp();
+          }}
+          onCopyReport={() => {
+            void runtimeStatusBridge.copyReport();
+          }}
+        />
+      ) : null}
+      {showRuntimeRecovery ? (
+        <RuntimeRecoveryBanner
+          runtimeStatus={runtimeStatus}
+          isVoiceActive={isVoiceActive}
+          onTryAgain={() => {
+            runStatusAction(() => runtimeStatusBridge.tryAgain());
+          }}
+          onRestartApp={() => {
+            void runtimeStatusBridge.restartApp();
+          }}
+        />
+      ) : null}
+      <ReadinessGate
+        modelLifecycleBridge={modelLifecycleBridge}
+        onDialogStateChange={(state) => {
+          setReadinessDialogState(state);
         }}
-        onTryAgain={() => {
-          runStatusAction(() => runtimeStatusBridge.tryAgain());
-        }}
-        onRestartApp={() => {
-          void runtimeStatusBridge.restartApp();
-        }}
-        onCopyReport={() => {
-          void runtimeStatusBridge.copyReport();
-        }}
-      />
-      <RuntimeRecoveryBanner
-        runtimeStatus={runtimeStatus}
-        isVoiceActive={isVoiceActive}
-        onTryAgain={() => {
-          runStatusAction(() => runtimeStatusBridge.tryAgain());
-        }}
-        onRestartApp={() => {
-          void runtimeStatusBridge.restartApp();
-        }}
-      />
-      <ReadinessGate modelLifecycleBridge={modelLifecycleBridge}>{children}</ReadinessGate>
+      >
+        {children}
+      </ReadinessGate>
     </>
   );
 }

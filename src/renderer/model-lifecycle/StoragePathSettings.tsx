@@ -1,23 +1,42 @@
-import { useState, type FormEvent, type ReactElement } from "react";
+import { useEffect, useState, type FormEvent, type ReactElement } from "react";
 
 type StoragePathSettingsProps = {
   activePath: string;
-  onChangePath: (nextPath: string, options: { createIfMissing: boolean }) => Promise<void> | void;
+  onChangePath: (nextPath: string) => Promise<void> | void;
   defaultExpanded?: boolean;
+  expectedPathHint?: string;
 };
 
 export function StoragePathSettings({
   activePath,
   onChangePath,
-  defaultExpanded = false
+  defaultExpanded = false,
+  expectedPathHint
 }: StoragePathSettingsProps): ReactElement {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [nextPath, setNextPath] = useState(activePath);
-  const [createIfMissing, setCreateIfMissing] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
+  useEffect(() => {
+    setNextPath(activePath);
+  }, [activePath]);
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
-    void onChangePath(nextPath, { createIfMissing });
+    setIsSaving(true);
+    setStatusMessage("");
+
+    try {
+      await onChangePath(nextPath);
+      setStatusMessage("Storage path updated.");
+      setIsExpanded(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to change storage path.";
+      setStatusMessage(message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -34,12 +53,18 @@ export function StoragePathSettings({
       <p style={{ margin: "0.4rem 0" }}>
         Active path: <code>{activePath}</code>
       </p>
+      {expectedPathHint ? (
+        <p style={{ margin: "0.4rem 0", fontSize: "0.9rem", color: "#334154" }}>
+          Expected models path: <code>{expectedPathHint}</code>
+        </p>
+      ) : null}
 
       {!isExpanded ? (
         <button
           onClick={() => {
             setIsExpanded(true);
             setNextPath(activePath);
+            setStatusMessage("");
           }}
         >
           Change path directory
@@ -57,29 +82,32 @@ export function StoragePathSettings({
             }}
           />
 
-          <label style={{ display: "flex", gap: "0.35rem", alignItems: "center" }}>
-            <input
-              type="checkbox"
-              checked={createIfMissing}
-              onChange={(event) => {
-                setCreateIfMissing(event.currentTarget.checked);
-              }}
-            />
-            Create directory if missing
-          </label>
+          <p style={{ margin: 0, fontSize: "0.9rem", color: "#334154" }}>
+            Missing directories are created automatically when you apply this path.
+          </p>
 
           <div style={{ display: "flex", gap: "0.45rem" }}>
-            <button type="submit">Apply path</button>
+            <button type="submit" disabled={isSaving}>
+              {isSaving ? "Applying..." : "Apply path"}
+            </button>
             <button
               type="button"
+              disabled={isSaving}
               onClick={() => {
                 setIsExpanded(false);
+                setNextPath(activePath);
               }}
             >
               Cancel
             </button>
           </div>
         </form>
+      ) : null}
+
+      {statusMessage ? (
+        <p aria-live="polite" style={{ margin: "0.45rem 0 0", fontSize: "0.9rem" }}>
+          {statusMessage}
+        </p>
       ) : null}
     </section>
   );

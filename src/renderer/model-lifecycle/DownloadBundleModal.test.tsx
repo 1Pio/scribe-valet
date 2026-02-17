@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import type { ModelLifecycleSnapshot } from "../../shared/types/model-lifecycle";
-import { DownloadBundleModal } from "./DownloadBundleModal";
+import { DownloadBundleModal, shouldShowDownloadDialog } from "./DownloadBundleModal";
 
 describe("DownloadBundleModal", () => {
   it("renders one-time bundle confirmation with explicit percent lines", () => {
@@ -42,6 +42,17 @@ describe("DownloadBundleModal", () => {
     expect(html).toContain("C:/models");
     expect(html).toContain("Speech - 14% (downloading)");
     expect(html).toContain("Confirm bundle download");
+  });
+
+  it("tracks whether download dialog should be shown", () => {
+    expect(
+      shouldShowDownloadDialog(
+        createSnapshot({
+          downloadConfirmation: { required: true, confirmedAtMs: null }
+        })
+      )
+    ).toBe(true);
+    expect(shouldShowDownloadDialog(createSnapshot({ state: "ready" }))).toBe(false);
   });
 });
 

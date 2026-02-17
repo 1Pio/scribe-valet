@@ -177,7 +177,10 @@ export class ModelLifecycleService extends EventEmitter {
           setupReason,
           diagnosticsSummary:
             "Some required artifacts are missing. Download confirmation is required once before installation.",
-          diagnosticsLines: missing.map((item) => `${item.displayName}: missing`),
+          diagnosticsLines: [
+            `Model root: ${modelRoot}`,
+            ...missing.map((item) => `${item.displayName}: missing`)
+          ],
           modeAvailability: buildModeAvailability(health),
           artifacts: health,
           recoveryActions: createRecoveryActions(),
@@ -201,6 +204,7 @@ export class ModelLifecycleService extends EventEmitter {
           setupReason: installResult.failure.reason,
           diagnosticsSummary: installResult.failure.message,
           diagnosticsLines: [
+            `Model root: ${modelRoot}`,
             `Artifact: ${installResult.failure.artifactId}`,
             `Code: ${installResult.failure.code}`,
             `Hint: ${installResult.failure.hint}`,
@@ -209,7 +213,7 @@ export class ModelLifecycleService extends EventEmitter {
           modeAvailability: buildModeAvailability(nextHealth),
           artifacts: nextHealth,
           recoveryActions: createRecoveryActions(),
-          requireDownloadConfirmation: true,
+          requireDownloadConfirmation: false,
           stepOverride: {
             inspect: "warning",
             install: "error",
@@ -249,11 +253,14 @@ export class ModelLifecycleService extends EventEmitter {
       this.createSnapshot("degraded", {
         setupReason: null,
         diagnosticsSummary: "Startup completed with partial model availability.",
-        diagnosticsLines: stillMissing.map((item) => `${item.displayName}: unavailable`),
+        diagnosticsLines: [
+          `Model root: ${modelRoot}`,
+          ...stillMissing.map((item) => `${item.displayName}: unavailable`)
+        ],
         modeAvailability: buildModeAvailability(postInstallHealth),
         artifacts: postInstallHealth,
         recoveryActions: createRecoveryActions(),
-        requireDownloadConfirmation: true,
+        requireDownloadConfirmation: false,
         stepOverride: {
           inspect: "warning",
           install: "warning",
@@ -265,18 +272,9 @@ export class ModelLifecycleService extends EventEmitter {
     return this.snapshot;
   }
 
-  public confirmDownload(): ModelLifecycleSnapshot {
+  public async confirmDownload(): Promise<ModelLifecycleSnapshot> {
     this.downloadConfirmed = true;
-    const next = {
-      ...this.snapshot,
-      updatedAtMs: this.now(),
-      downloadConfirmation: {
-        required: false,
-        confirmedAtMs: this.now()
-      }
-    };
-    this.publish(next);
-    return this.snapshot;
+    return this.startCheck();
   }
 
   public async retry(): Promise<ModelLifecycleSnapshot> {

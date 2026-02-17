@@ -5,13 +5,18 @@ import { StoragePathSettings } from "./StoragePathSettings";
 describe("StoragePathSettings", () => {
   it("shows only active path by default", () => {
     const html = renderToStaticMarkup(
-      <StoragePathSettings activePath="C:/Users/A/models" onChangePath={vi.fn()} />
+      <StoragePathSettings
+        activePath="C:/Users/A/models"
+        expectedPathHint="C:/Users/A/models"
+        onChangePath={vi.fn()}
+      />
     );
 
     expect(html).toContain("Active path:");
     expect(html).toContain("C:/Users/A/models");
+    expect(html).toContain("Expected models path:");
     expect(html).toContain("Change path directory");
-    expect(html).not.toContain("Create directory if missing");
+    expect(html).not.toContain("Missing directories are created automatically");
   });
 
   it("renders inline path change controls when expanded", () => {
@@ -25,7 +30,7 @@ describe("StoragePathSettings", () => {
 
     expect(html).toContain("Directory");
     expect(html).toContain("value=\"C:/Users/A/models\"");
-    expect(html).toContain("Create directory if missing");
+    expect(html).toContain("Missing directories are created automatically");
     expect(html).toContain("Apply path");
   });
 });

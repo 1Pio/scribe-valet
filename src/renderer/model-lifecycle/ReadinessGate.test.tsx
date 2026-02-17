@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ModelLifecycleSnapshot } from "../../shared/types/model-lifecycle";
-import { getModeAvailabilityNotice, shouldBlockNormalFlow } from "./ReadinessGate";
+import { deriveDialogState, getModeAvailabilityNotice, shouldBlockNormalFlow } from "./ReadinessGate";
 
 describe("ReadinessGate helpers", () => {
   it("blocks normal app flow for setup-required and recovery-required states", () => {
@@ -31,6 +31,26 @@ describe("ReadinessGate helpers", () => {
 
     expect(notice).toContain("Dictation is available with raw output");
     expect(notice).toContain("Assistant remains blocked");
+  });
+
+  it("prioritizes a single active dialog state", () => {
+    const downloadRequired = createSnapshot("setup-required", {
+      downloadConfirmation: {
+        required: true,
+        confirmedAtMs: null
+      }
+    });
+    expect(deriveDialogState(downloadRequired)).toBe("download");
+
+    const recoveryRequired = createSnapshot("recovery-required", {
+      downloadConfirmation: {
+        required: false,
+        confirmedAtMs: null
+      }
+    });
+    expect(deriveDialogState(recoveryRequired)).toBe("setup");
+
+    expect(deriveDialogState(createSnapshot("ready"))).toBe("none");
   });
 });
 

@@ -12,10 +12,7 @@ export function DownloadBundleModal({
   installPath,
   onConfirm
 }: DownloadBundleModalProps): ReactElement | null {
-  const shouldRender =
-    snapshot.downloadConfirmation.required ||
-    snapshot.state === "downloading" ||
-    snapshot.downloadProgress.some((line) => line.status !== "pending");
+  const shouldRender = shouldShowDownloadDialog(snapshot);
 
   if (!shouldRender) {
     return null;
@@ -27,14 +24,17 @@ export function DownloadBundleModal({
 
   return (
     <section
+      role="dialog"
+      aria-modal="true"
       aria-live="polite"
       aria-label="Model download"
       style={{
-        border: "1px solid #c9d4ff",
-        background: "#f5f8ff",
+        border: "1px solid #b8c6ef",
+        background: "#f8faff",
         borderRadius: "0.75rem",
-        padding: "0.8rem",
-        marginBottom: "0.8rem"
+        padding: "1rem",
+        marginBottom: "0.8rem",
+        boxShadow: "0 10px 28px rgba(10, 38, 74, 0.14)"
       }}
     >
       <h3 style={{ margin: 0 }}>
@@ -58,12 +58,25 @@ export function DownloadBundleModal({
       </ul>
 
       {snapshot.downloadConfirmation.required ? (
-        <button onClick={onConfirm}>Confirm bundle download</button>
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+          <button onClick={onConfirm}>Confirm bundle download</button>
+          <span style={{ fontSize: "0.9rem", color: "#2f4770" }}>
+            This starts download and validation for the required models.
+          </span>
+        </div>
       ) : (
         <p style={{ margin: "0.35rem 0", fontSize: "0.9rem" }}>
           Download progress is observe-only during startup.
         </p>
       )}
     </section>
+  );
+}
+
+export function shouldShowDownloadDialog(snapshot: ModelLifecycleSnapshot): boolean {
+  return (
+    snapshot.downloadConfirmation.required ||
+    snapshot.state === "downloading" ||
+    snapshot.downloadProgress.some((line) => line.status !== "pending")
   );
 }

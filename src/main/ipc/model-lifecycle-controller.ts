@@ -23,7 +23,7 @@ type ModelLifecycleServiceLike = {
   retry: () => Promise<ModelLifecycleSnapshot>;
   changePath: (customRoot: string) => Promise<ModelLifecycleSnapshot>;
   copyDiagnostics: () => string;
-  confirmDownload: () => ModelLifecycleSnapshot;
+  confirmDownload: () => Promise<ModelLifecycleSnapshot>;
 };
 
 type IpcMainLike = {

@@ -4,20 +4,28 @@ import type {
   ModelLifecycleSnapshot
 } from "../../shared/types/model-lifecycle";
 import type { ModelLifecycleBridge } from "../../preload/model-lifecycle-bridge";
-import { DownloadBundleModal } from "./DownloadBundleModal";
+import { DownloadBundleModal, shouldShowDownloadDialog } from "./DownloadBundleModal";
 import { ReadinessToast } from "./ReadinessToast";
 import { StoragePathSettings } from "./StoragePathSettings";
+
+export type ReadinessDialogState = "none" | "download" | "setup";
 
 type ReadinessGateProps = {
   modelLifecycleBridge: ModelLifecycleBridge;
   children: ReactElement;
+  onDialogStateChange?: (state: ReadinessDialogState) => void;
 };
 
-export function ReadinessGate({ modelLifecycleBridge, children }: ReadinessGateProps): ReactElement {
+export function ReadinessGate({
+  modelLifecycleBridge,
+  children,
+  onDialogStateChange
+}: ReadinessGateProps): ReactElement {
   const [snapshot, setSnapshot] = useState<ModelLifecycleSnapshot>(createInitialSnapshot());
   const [readyToastShown, setReadyToastShown] = useState(false);
   const modeNotice = useMemo(() => getModeAvailabilityNotice(snapshot.modeAvailability), [snapshot]);
   const activePath = useMemo(() => extractModelRoot(snapshot), [snapshot]);
+  const activeDialog = useMemo(() => deriveDialogState(snapshot), [snapshot]);
 
   useEffect(() => {
     let disposed = false;
@@ -79,7 +87,12 @@ export function ReadinessGate({ modelLifecycleBridge, children }: ReadinessGateP
     setSnapshot(nextSnapshot);
   };
 
-  const showSetupScreen = shouldBlockNormalFlow(snapshot);
+  useEffect(() => {
+    onDialogStateChange?.(activeDialog);
+  }, [activeDialog, onDialogStateChange]);
+
+  const showSetupScreen = activeDialog === "setup";
+  const blockNormalFlow = shouldBlockNormalFlow(snapshot) || activeDialog === "download";
 
   return (
     <>
@@ -124,7 +137,7 @@ export function ReadinessGate({ modelLifecycleBridge, children }: ReadinessGateP
         </section>
       ) : null}
 
-      {modeNotice ? (
+      {modeNotice && activeDialog === "none" ? (
         <section
           aria-live="polite"
           style={{
@@ -140,18 +153,22 @@ export function ReadinessGate({ modelLifecycleBridge, children }: ReadinessGateP
         </section>
       ) : null}
 
-      <DownloadBundleModal
-        snapshot={snapshot}
-        installPath={activePath}
-        onConfirm={() => {
-          void modelLifecycleBridge.confirmDownload().then((next) => {
-            setSnapshot(next);
-          });
-        }}
-      />
+      {activeDialog === "download" ? (
+        <DownloadBundleModal
+          snapshot={snapshot}
+          installPath={activePath}
+          onConfirm={() => {
+            void modelLifecycleBridge.confirmDownload().then((next) => {
+              setSnapshot(next);
+            });
+          }}
+        />
+      ) : null}
 
       {showSetupScreen ? (
         <section
+          role="dialog"
+          aria-modal="true"
           aria-live="polite"
           aria-label="Readiness setup required"
           style={{
@@ -159,7 +176,8 @@ export function ReadinessGate({ modelLifecycleBridge, children }: ReadinessGateP
             background: "#fff9ee",
             borderRadius: "0.75rem",
             padding: "0.85rem",
-            marginBottom: "0.85rem"
+            marginBottom: "0.85rem",
+            boxShadow: "0 10px 26px rgba(74, 45, 10, 0.12)"
           }}
         >
           <h2 style={{ marginTop: 0 }}>Finish model setup before using all features</h2>
@@ -193,6 +211,7 @@ export function ReadinessGate({ modelLifecycleBridge, children }: ReadinessGateP
 
           <StoragePathSettings
             activePath={activePath}
+            expectedPathHint={getExpectedModelsPathHint(activePath)}
             defaultExpanded={snapshot.state === "recovery-required"}
             onChangePath={(nextPath) => applyPathChange(nextPath)}
           />
@@ -208,14 +227,7 @@ export function ReadinessGate({ modelLifecycleBridge, children }: ReadinessGateP
         </section>
       ) : null}
 
-      {!showSetupScreen ? (
-        <StoragePathSettings
-          activePath={activePath}
-          onChangePath={(nextPath) => applyPathChange(nextPath)}
-        />
-      ) : null}
-
-      {!showSetupScreen ? children : <main />}
+      {!blockNormalFlow ? children : <main />}
     </>
   );
 }
@@ -290,4 +302,24 @@ function extractModelRoot(snapshot: ModelLifecycleSnapshot): string {
   }
 
   return matchedLine.replace("Model root: ", "");
+}
+
+function getExpectedModelsPathHint(activePath: string): string {
+  if (activePath !== "(pending path resolution)") {
+    return activePath;
+  }
+
+  return "%LOCALAPPDATA%\\Scribe-Valet\\models";
+}
+
+export function deriveDialogState(snapshot: ModelLifecycleSnapshot): ReadinessDialogState {
+  if (snapshot.state !== "recovery-required" && shouldShowDownloadDialog(snapshot)) {
+    return "download";
+  }
+
+  if (shouldBlockNormalFlow(snapshot)) {
+    return "setup";
+  }
+
+  return "none";
 }

@@ -131,7 +131,7 @@ function createServiceStub(overrides?: {
     retry: vi.fn(async () => snapshot),
     changePath: vi.fn(async (_customRoot: string) => snapshot),
     copyDiagnostics: vi.fn(() => "diagnostics"),
-    confirmDownload: vi.fn(() => snapshot)
+    confirmDownload: vi.fn(async () => snapshot)
   };
 }
 

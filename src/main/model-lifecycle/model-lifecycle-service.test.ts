@@ -135,8 +135,7 @@ describe("ModelLifecycleService", () => {
       installArtifactImpl: installAttemptCounter
     });
 
-    service.confirmDownload();
-    const snapshot = await service.startCheck();
+    const snapshot = await service.confirmDownload();
 
     expect(snapshot.state).toBe("recovery-required");
     expect(snapshot.setupReason).toBe("download-failure");
@@ -145,6 +144,8 @@ describe("ModelLifecycleService", () => {
       "change-path",
       "copy-diagnostics"
     ]);
+    expect(snapshot.downloadConfirmation.required).toBe(false);
+    expect(snapshot.diagnostics.lines[0]).toContain("Model root:");
     expect(snapshot.diagnostics.lines).toContain("Attempts: 5");
     expect(installAttemptCounter).toHaveBeenCalledTimes(5);
   });
@@ -176,11 +177,11 @@ describe("ModelLifecycleService", () => {
       installArtifactImpl: installAttemptCounter
     });
 
-    service.confirmDownload();
-    const snapshot = await service.startCheck();
+    const snapshot = await service.confirmDownload();
 
     expect(snapshot.state).toBe("recovery-required");
     expect(snapshot.setupReason).toBe("verification-failure");
+    expect(snapshot.downloadConfirmation.required).toBe(false);
     expect(snapshot.diagnostics.lines).toContain("Attempts: 3");
     expect(installAttemptCounter).toHaveBeenCalledTimes(3);
   });
