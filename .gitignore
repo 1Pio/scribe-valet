@@ -36,4 +36,4 @@ coverage/
 *.temp
 
 # Project planning docs
-.planning/
+#.planning/
